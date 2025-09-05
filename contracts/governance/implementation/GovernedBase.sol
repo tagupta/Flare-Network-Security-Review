@@ -13,7 +13,8 @@ import {IGoverned} from "../interfaces/IGoverned.sol";
  * @dev This version is compatible with both Flare (where governance settings is in genesis at the address
  *   0x1000000000000000000000000000000000000007) and Songbird (where governance settings is a deployed contract).
  * @dev It also uses diamond storage for state, so it is safer tp use in diamond structures or proxies.
- **/
+ *
+ */
 abstract contract GovernedBase is IGoverned {
     struct GovernedState {
         IGovernanceSettings governanceSettings;
@@ -24,7 +25,7 @@ abstract contract GovernedBase is IGoverned {
         mapping(bytes32 encodedCallHash => uint256 allowedAfterTimestamp) timelockedCalls;
     }
 
-    modifier onlyGovernance {
+    modifier onlyGovernance() {
         if (_timeToExecute()) {
             _beforeExecute();
             _;
@@ -42,14 +43,13 @@ abstract contract GovernedBase is IGoverned {
         }
     }
 
-    modifier onlyImmediateGovernance {
+    modifier onlyImmediateGovernance() {
         _checkOnlyGovernance();
         _;
     }
 
     // solhint-disable-next-line no-empty-blocks
-    constructor() {
-    }
+    constructor() {}
 
     /**
      * @notice Execute the timelocked governance calls once the timelock period expires.
@@ -156,6 +156,8 @@ abstract contract GovernedBase is IGoverned {
         }
     }
 
+    //@audit-high Timelock Extension Attack (also known as a "griefing attack" on governance) Legitimate governance proposals can be indefinitely delayed
+    //Repeat Indefinitely: This can be done repeatedly, effectively preventing execution forever
     function _recordTimelockedCall(bytes calldata _encodedCall, uint256 _minimumTimelock) private {
         GovernedState storage state = _governedState();
         _checkOnlyGovernance();
@@ -165,6 +167,7 @@ abstract contract GovernedBase is IGoverned {
             timelock = _minimumTimelock;
         }
         uint256 allowedAt = block.timestamp + timelock;
+        //@note mapping entries get overwritten without any checks for existing entries.
         state.timelockedCalls[encodedCallHash] = allowedAt;
         emit GovernanceCallTimelocked(_encodedCall, encodedCallHash, allowedAt);
     }
@@ -194,9 +197,7 @@ abstract contract GovernedBase is IGoverned {
             let ptr := mload(0x40)
             mstore(0x40, add(ptr, size))
             returndatacopy(ptr, 0, size)
-            if _success {
-                return(ptr, size)
-            }
+            if _success { return(ptr, size) }
             revert(ptr, size)
         }
     }

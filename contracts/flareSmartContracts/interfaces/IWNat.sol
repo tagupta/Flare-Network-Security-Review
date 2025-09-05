@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.6 <0.9;
 
+//@note The native FLR token is not an ERC-20
+//@note WNAT "wraps" FLR into an ERC-20 compliant format
 import {IVPToken} from "@flarenetwork/flare-periphery-contracts/flare/IVPToken.sol";
 
 /**
