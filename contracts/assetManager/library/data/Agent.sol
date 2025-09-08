@@ -90,6 +90,7 @@ library Agent {
         // On redemption payment failure, redeemer will be paid only in vault collateral in this case
         // (and will be paid less if there isn't enough - small extra risk for pool token holders).
         // There will always be `poolRedeemingAMG <= redeemingAMG`.
+        //@note The vault collateral portion of redeemingAMG that remains locked after an Agent has exited the pool.
         uint64 poolRedeemingAMG;
         // When lot size changes, there may be some leftover after redemption that doesn't fit
         // a whole lot size. It is added to dustAMG and can be recovered via self-close.
@@ -147,8 +148,8 @@ library Agent {
     }
 
     // underwater collateral classes
-    uint8 internal constant LF_VAULT = 1 << 0;
-    uint8 internal constant LF_POOL = 1 << 1;
+    uint8 internal constant LF_VAULT = 1 << 0; //@note Vault Collateral too low (LF_VAULT)
+    uint8 internal constant LF_POOL = 1 << 1; //@note Pool Collateral too low (LF_POOL)
 
     // diamond state accessors
 
@@ -164,12 +165,14 @@ library Agent {
 
     // Like get, but only fail if status is EMPTY.
     // This is useful for reading agent info after the agent has been destroyed.
+    //@audit-q call to check the status of the agent after it got destroyed
     function getAllowDestroyed(address _address) internal view returns (Agent.State storage) {
         Agent.State storage agent = getWithoutCheck(_address);
         require(agent.status != Agent.Status.EMPTY, InvalidAgentVaultAddress());
         return agent;
     }
 
+    //@audit-q check that these two getWithoutCheck,vaultAddress functions return the values as expected.
     function getWithoutCheck(address _address) internal pure returns (Agent.State storage _agent) {
         bytes32 position = bytes32(uint256(AGENTS_POSITION) ^ (uint256(uint160(_address)) << 64));
         // solhint-disable-next-line no-inline-assembly
@@ -178,6 +181,7 @@ library Agent {
         }
     }
 
+    //@audit-q check that these two getWithoutCheck,vaultAddress functions return the values as expected.
     function vaultAddress(Agent.State storage _agent) internal pure returns (address) {
         bytes32 position;
         // solhint-disable-next-line no-inline-assembly

@@ -5,6 +5,8 @@ library Collateral {
     enum Kind {
         VAULT, // vault collateral (tokens in in agent vault)
         POOL, // pool collateral (NAT)
+        //@note An Agent's stake in the POOL (in NAT)
+        //@note the amount of NAT an Agent has staked in the backstop pool
         AGENT_POOL // agent's pool tokens (expressed in NAT) - only important for minting
 
     }

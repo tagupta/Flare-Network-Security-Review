@@ -28,6 +28,7 @@ interface IIAssetManager is IAssetManager, IGoverned, IDiamondCut, IISettingsMan
      * NOTE: this method will be called automatically when the asset manager is added to a controller
      *      and cannot be called directly.
      */
+    //@note This is a crucial initialization function. The AssetManager is deployed, but it's not active until it's "attached" to the AssetManagerController
     function attachController(bool attached) external;
 
     ////////////////////////////////////////////////////////////////////////////////////

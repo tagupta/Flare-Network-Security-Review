@@ -25,6 +25,7 @@ library Agents {
     error OnlyAgentVaultOwner();
     error OnlyCollateralPool();
 
+    //@audit-q this function doen't work for getting an element at a specific index
     function getAllAgents(uint256 _start, uint256 _end)
         internal
         view
@@ -64,6 +65,8 @@ library Agents {
         return Globals.getAgentOwnerRegistry().getWorkAddress(_agent.ownerManagementAddress);
     }
 
+    //@audit-q what if ownerManagementAddress is zero with an agent of empty status/destroyed status
+    //@audit-q check if it's possible to create an agent with zero management | work address
     function getOwnerPayAddress(Agent.State storage _agent) internal view returns (address payable) {
         address workAddress = getWorkAddress(_agent);
         return workAddress != address(0) ? payable(workAddress) : payable(_agent.ownerManagementAddress);
@@ -121,6 +124,8 @@ library Agents {
         return state.collateralTokens[_agent.poolCollateralIndex];
     }
 
+    //@audit-low assert for input validation is not recommended
+    //assert should be used for invariants (conditions that can never be false). Input validation should use require because it signifies an external error (e.g., from a user or caller).
     function getCollateral(Agent.State storage _agent, Collateral.Kind _kind)
         internal
         view

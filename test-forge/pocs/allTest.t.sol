@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 import {Test, console2} from 'forge-std/Test.sol';
+import {SafePct} from 'contracts/utils/library/SafePct.sol';
 
 contract AllTest is Test {
     uint256[] selectors;
@@ -9,14 +10,11 @@ contract AllTest is Test {
     function setUp() external {
     }
 
-    function testSomething() external {
-        for(uint i = 0 ; i < 256; i++)
-        selectors.push(i);
-        selectorPosition = uint8(selectors.length);
-        if(selectorPosition == 0){
-            console2.log("Position 0 for index: ", selectorPosition, selectors.length);
-            revert();
-        }
+    function testOverflowWithMulDiv(uint256 x, uint256 y, uint256 z) external pure {
+        uint256 result = SafePct.mulDiv(x,y,z);
+        console2.log("Result: ", result);
     }
+
+
 
 }

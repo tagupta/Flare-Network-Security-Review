@@ -184,6 +184,7 @@ library LibDiamond {
         }
         enforceHasContractCode(_init, "LibDiamondCut: _init address has no code");
         // solhint-disable-next-line avoid-low-level-calls
+        //@audit-low wastage of gas in case the length of _calldata == 0, a check to see if length is more than zero
         (bool success, bytes memory error) = _init.delegatecall(_calldata);
         if (!success) {
             if (error.length > 0) {

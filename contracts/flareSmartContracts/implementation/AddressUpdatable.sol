@@ -16,7 +16,6 @@ abstract contract AddressUpdatable is IAddressUpdatable, IIAddressUpdatable {
         _;
     }
 
-    //@audit-low no zero address validation check
     constructor(address _addressUpdater) {
         setAddressUpdaterValue(_addressUpdater);
     }

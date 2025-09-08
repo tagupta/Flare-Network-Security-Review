@@ -88,7 +88,6 @@ interface IAssetManager is
      * This is required for the asset manager to be operational (create agent and minting don't work otherwise).
      */
     //@note Checks if the contract is connected to its main controller.
-    //@audit-q is there going to be a one-on-one mapping between asset manager and controller?
     function controllerAttached() external view returns (bool);
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -750,6 +749,7 @@ interface IAssetManager is
      * @param _agentVault agent vault address
      * @return _liquidationStartTs timestamp when liquidation started
      */
+    //@note Checks if an Agent is undercollateralized and starts the liquidation process.
     function startLiquidation(address _agentVault) external returns (uint256 _liquidationStartTs);
 
     /**

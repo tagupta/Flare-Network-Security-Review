@@ -68,6 +68,8 @@ contract AssetManagerController is
      * Add an asset manager to this controller. The asset manager controller address in the settings of the
      * asset manager must match this. This method automatically marks the asset manager as attached.
      */
+    //@audit-q it is adding asset manager into the list
+    //But not attaching them if their controller is not this contract
     function addAssetManager(IIAssetManager _assetManager) external onlyGovernance {
         if (assetManagerIndex[address(_assetManager)] != 0) return;
         assetManagers.push(_assetManager);
@@ -102,6 +104,8 @@ contract AssetManagerController is
     /**
      * Return the list of all asset managers managed by this controller.
      */
+    //@audit-low this may become costilier as the array length increases.
+    //@note Consider implementing pagination (getAssetManagers(uint256 start, uint256 end))
     function getAssetManagers() external view returns (IAssetManager[] memory _assetManagers) {
         uint256 length = assetManagers.length;
         _assetManagers = new IAssetManager[](length);
@@ -505,6 +509,7 @@ contract AssetManagerController is
      * and there will be no way to update contracts. This method allow the update to only change some
      * of the asset managers.
      */
+    //@audit-q there is no access control on this function. Need to see how catastrophic can this lead to?
     function updateContracts(IIAssetManager[] calldata _assetManagers) external {
         // read contract addresses
         IIAddressUpdater addressUpdater = IIAddressUpdater(getAddressUpdater());
@@ -601,7 +606,7 @@ contract AssetManagerController is
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Helpers
-
+    //@audit-low The helper functions are redundant. The optimal pattern is for the external functions to call _callOnManagers(_assetManagers, abi.encodeCall(TargetInterface.functionName, (arg1, arg2))) directly.
     function _setValueOnManagers(IIAssetManager[] memory _assetManagers, bytes4 _selector, address _value) private {
         _callOnManagers(_assetManagers, abi.encodeWithSelector(_selector, (_value)));
     }
@@ -610,6 +615,7 @@ contract AssetManagerController is
         _callOnManagers(_assetManagers, abi.encodeWithSelector(_selector, (_value)));
     }
 
+    //@audit-low check on the length of _calldata
     function _callOnManagers(IIAssetManager[] memory _assetManagers, bytes memory _calldata) private {
         for (uint256 i = 0; i < _assetManagers.length; i++) {
             address assetManager = address(_assetManagers[i]);

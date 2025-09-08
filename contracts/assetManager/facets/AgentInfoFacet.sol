@@ -30,6 +30,7 @@ contract AgentInfoFacet is AssetManagerBase {
      * @param _start first index to return from the available agent's list
      * @param _end end index (one above last) to return from the available agent's list
      */
+    //@audit-low this function lacks input validation to make sure that _start < _end
     function getAllAgents(uint256 _start, uint256 _end)
         external
         view

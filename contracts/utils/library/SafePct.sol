@@ -21,6 +21,7 @@ library SafePct {
      * Calculates `floor(x * y / z)`, reverting on overflow, but only if the result overflows.
      * Requirement: intermediate operations must revert on overflow.
      */
+    //@audit-high overflow in the computation of (a * c * z), (a * d), (b * c), (b * d) can result in correct result
     function mulDiv(uint256 x, uint256 y, uint256 z) internal pure returns (uint256) {
         require(z > 0, DivisionByZero());
 

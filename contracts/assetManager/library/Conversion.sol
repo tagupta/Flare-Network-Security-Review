@@ -8,10 +8,13 @@ import {AssetManagerState} from "./data/AssetManagerState.sol";
 import {Globals} from "./Globals.sol";
 import {CollateralTypeInt} from "./data/CollateralTypeInt.sol";
 import {AssetManagerSettings} from "../../userInterfaces/data/AssetManagerSettings.sol";
-
+//@note UBA => underlying base amount, The smallest unit of the underlying asset on its native chain.
+//@note AMG => Asset Management Granularity => The protocol's internal accounting unit. It's a "common currency" for all internal math.
+//@note Lot => The smallest amount of f-assets a user can mint or redeem in a single transaction.
+// To batch operations and reduce on-chain computation. Instead of processing every single Satoshi, the system processes in "chunks" or lots. This is a gas optimization and helps manage granularity.
 library Conversion {
     using SafePct for uint256;
-
+    //@note 1 AMG = 1e9 NAT Wei
     uint256 internal constant AMG_TOKEN_WEI_PRICE_SCALE_EXP = 9;
     uint256 internal constant AMG_TOKEN_WEI_PRICE_SCALE = 10 ** AMG_TOKEN_WEI_PRICE_SCALE_EXP;
     uint256 internal constant NAT_WEI = 1e18;
@@ -36,6 +39,9 @@ library Conversion {
             currentAmgPriceInTokenWeiWithTs(_token, false);
         (uint256 trustedPrice, uint256 assetTimestampTrusted, uint256 tokenTimestampTrusted) =
             currentAmgPriceInTokenWeiWithTs(_token, true);
+        //@audit-high this is an incorrect way to check the freshness of the trusted price
+        // It's comparing the trusted price's age to the FTSO price's age, but it should be comparing the trusted price's age to the current time.
+        //The trusted price doesn't need to be newer than the FTSO price. It just needs to be recent enough according to the protocol's rules (maxTrustedPriceAgeSeconds).
         bool trustedPriceFresh = tokenTimestampTrusted + settings.maxTrustedPriceAgeSeconds >= tokenTimestamp
             && assetTimestampTrusted + settings.maxTrustedPriceAgeSeconds >= assetTimestamp;
         _ftsoPrice = ftsoPrice;
@@ -48,6 +54,8 @@ library Conversion {
         return uint256(_valueAMG) * settings.assetMintingGranularityUBA;
     }
 
+    //@audit-med precision loss
+    //@audit-med M02: convertUBAToAmg is Unsafe Without Explicit Pre-Rounding
     function convertUBAToAmg(uint256 _valueUBA) internal view returns (uint64) {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         return SafeCast.toUint64(_valueUBA / settings.assetMintingGranularityUBA);
@@ -106,6 +114,8 @@ library Conversion {
             uint256 price = calcAmgToTokenWeiPrice(_token.decimals, 1, 0, assetPrice, assetFtsoDec);
             return (price, assetTs, assetTs);
         } else {
+            //@note tokenTs: This is the timestamp of when the price was finalized and published by the FTSO.
+            //@note tokenFtsoDec: This is the number of decimals that the FTSO uses for reporting the price of this specific token.
             (uint256 tokenPrice, uint256 tokenTs, uint256 tokenFtsoDec) =
                 readFtsoPrice(_token.tokenFtsoSymbol, _fromTrustedProviders);
             uint256 price = calcAmgToTokenWeiPrice(_token.decimals, tokenPrice, tokenFtsoDec, assetPrice, assetFtsoDec);
