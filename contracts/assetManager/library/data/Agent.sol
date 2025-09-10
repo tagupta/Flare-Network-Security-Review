@@ -62,6 +62,7 @@ library Agent {
         uint16 feeBIPS;
         // Share of the minting fee that goes to the pool as percentage of the minting fee.
         uint16 poolFeeShareBIPS;
+        //@audit-low comments are same
         // Collateral ratio at which we calculate locked collateral and collateral available for minting.
         // Agent may set own value for minting collateral ratio when entering the available agent list,
         // but it must always be greater than minimum collateral ratio.

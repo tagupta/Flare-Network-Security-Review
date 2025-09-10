@@ -5,6 +5,8 @@ library MathUtils {
     /**
      * Increases the value `x` to a whole multiple of `rounding`.
      */
+    //@audit-high this function can overflow
+    //@audit-high division by zero risk
     function roundUp(uint256 x, uint256 rounding) internal pure returns (uint256) {
         // division by 0 and overflow checks preformed by Solidity >= 0.8
         uint256 remainder = x % rounding;

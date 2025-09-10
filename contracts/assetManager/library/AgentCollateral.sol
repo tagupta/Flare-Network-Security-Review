@@ -45,6 +45,8 @@ library AgentCollateral {
         CollateralTypeInt.Data storage collateral = _agent.getVaultCollateral();
         return Collateral.Data({
             kind: Collateral.Kind.VAULT,
+            //@audit-q can donation attacks be possible due to reading balance directly?
+            //@audit-high Vault Collateral Calculated from Balance, Allowing Donation Attacks
             fullCollateral: collateral.token.balanceOf(_agent.vaultAddress()),
             amgToTokenWeiPrice: Conversion.currentAmgPriceInTokenWei(collateral)
         });
@@ -55,23 +57,24 @@ library AgentCollateral {
         return Collateral.Data({
             kind: Collateral.Kind.POOL,
             fullCollateral: _agent.collateralPool.totalCollateral(),
-            amgToTokenWeiPrice: Conversion.currentAmgPriceInTokenWei(collateral)
+            amgToTokenWeiPrice: Conversion.currentAmgPriceInTokenWei(collateral)//@note 1 AMG => wNAT-Wei
         });
     }
 
+    //@note What is the value of the Agent's personal pool token holdings, and how do we price them
     function agentsPoolTokensCollateralData(Agent.State storage _agent, Collateral.Data memory _poolCollateral)
         internal
         view
         returns (Collateral.Data memory)
     {
-        IERC20 poolToken = _agent.collateralPool.poolToken();
+        IERC20 poolToken = _agent.collateralPool.poolToken();//@note CPT - Collateral Pool Token.
         uint256 agentPoolTokens = poolToken.balanceOf(_agent.vaultAddress());
         uint256 totalPoolTokens = poolToken.totalSupply();
         uint256 amgToPoolTokenWeiPrice = _poolCollateral.fullCollateral != 0
             ? _poolCollateral.amgToTokenWeiPrice.mulDiv(totalPoolTokens, _poolCollateral.fullCollateral)
             : _poolCollateral.amgToTokenWeiPrice; // price for empty pool is 1 token/NAT
         return Collateral.Data({
-            kind: Collateral.Kind.AGENT_POOL,
+            kind: Collateral.Kind.AGENT_POOL, //@note This data refers to the Agent's personal share of the pool, not the total pool itself.
             fullCollateral: agentPoolTokens,
             amgToTokenWeiPrice: amgToPoolTokenWeiPrice
         });
@@ -102,10 +105,14 @@ library AgentCollateral {
         view
         returns (uint256)
     {
+        //@note  total available collateral (in wei units)
         uint256 collateralWei = freeCollateralWei(_data, _agent);
+        //@note collateral required per lot (in wei units)
         uint256 lotWei = mintingLotCollateralWei(_data, _agent, _chargePoolFee);
         // lotWei=0 is possible only for agent's pool token collateral if pool balance in NAT is 0
         // so then we can safely return 0 here, since minting is impossible
+        //@note number of complete lots that can be minted
+        //@note Only allowing complete lots prevents partial minting
         return lotWei != 0 ? collateralWei / lotWei : 0;
     }
 
@@ -119,6 +126,7 @@ library AgentCollateral {
     }
 
     // Amount of collateral NOT available for new minting or withdrawal.
+    //@note How much of this Agent's collateral is currently busy backing existing commitments and cannot be touched?
     function lockedCollateralWei(Collateral.Data memory _data, Agent.State storage _agent)
         internal
         view
@@ -147,20 +155,26 @@ library AgentCollateral {
         return collateralRequiredToMintAmount(_data, _agent, settings.lotSizeAMG, _chargePoolFee);
     }
 
+    //@note It calculates how much collateral an Agent must lock up in order to mint a specific amount of f-assets.
     function collateralRequiredToMintAmount(
         Collateral.Data memory _data,
         Agent.State storage _agent,
         uint256 _amountAMG,
         bool _chargePoolFee
     ) internal view returns (uint256) {
+        //@note _amountAMG.mulBips(_agent.feeBIPS) => total fee in AMG
+        //@note _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) => pool's portion of the fee
         uint256 amountPoolFeeAMG =
             _chargePoolFee ? _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) : 0;
+        //@note This adds the principal amount to the pool fee. The Agent is responsible for backing not just the principal, but also the pool's share of the fee until it is collected.
         uint256 totalMintAmountAMG = _amountAMG + amountPoolFeeAMG;
         uint256 totalMintAmountWei = Conversion.convertAmgToTokenWei(totalMintAmountAMG, _data.amgToTokenWeiPrice);
         (uint256 mintingCollateralRatio,) = mintingMinCollateralRatio(_agent, _data.kind);
         return totalMintAmountWei.mulBips(mintingCollateralRatio);
     }
 
+    //@note _mintingMinCollateralRatioBIPS: The actual collateralization ratio that the specific agent must maintain to mint new fAssets. This can be higher than the system minimum if the agent has set a stricter personal requirement.
+    // _systemMinCollateralRatioBIPS: The absolute minimum ratio mandated by the protocol itself for this type of collateral. This is the global setting.
     function mintingMinCollateralRatio(Agent.State storage _agent, Collateral.Kind _kind)
         internal
         view
@@ -186,6 +200,7 @@ library AgentCollateral {
     // Used for redemption default payment - calculate all types of collateral at the same rate, so that
     // future redemptions don't get less than this one (unless the price changes).
     // Ignores collateral announced for withdrawal (redemption has priority over withdrawal).
+    //@note _valueAMG: This is the amount of fAsset debt (in AMG) that a specific redeemer is trying to claim collateral for.
     function maxRedemptionCollateral(Collateral.Data memory _data, Agent.State storage _agent, uint256 _valueAMG)
         internal
         view
@@ -196,7 +211,9 @@ library AgentCollateral {
         // For pool self close redemptions, pool collateral is never paid, so this method is not used.
         uint256 redeemingAMG = _data.kind == Collateral.Kind.POOL ? _agent.poolRedeemingAMG : _agent.redeemingAMG;
         assert(_valueAMG <= redeemingAMG);
+        //@note The Agent's total liabilities.
         uint256 totalAMG = uint256(_agent.mintedAMG) + uint256(_agent.reservedAMG) + uint256(redeemingAMG);
+        //@note (Redeemer's Claim / Agent's Total Debt) * Total Collateral Available = Redeemer's Fair Share
         return _data.fullCollateral.mulDiv(_valueAMG, totalAMG); // totalAMG > 0 (guarded by assert)
     }
 
