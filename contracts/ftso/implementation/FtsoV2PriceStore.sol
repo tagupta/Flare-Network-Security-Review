@@ -263,6 +263,9 @@ contract FtsoV2PriceStore is
         bytes21 feedId = symbolToFeedId[_symbol];
         require(feedId != bytes21(0), SymbolNotSupported());
         PriceStore storage feed = latestPrices[feedId];
+        //@note Instead of using the latest price, calculate an average price over several recent epochs (e.g., the last 24 hours). This makes short-term manipulation much less effective.
+        //@note check the efficacy of this issue
+        //@audit-q try this out
         _price = feed.value;
         _timestamp = _getEndTimestamp(feed.votingRoundId);
         int256 decimals = feed.decimals; // int8

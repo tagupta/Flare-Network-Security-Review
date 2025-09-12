@@ -142,10 +142,12 @@ library Agents {
 
     function collateralUnderwater(Agent.State storage _agent, Collateral.Kind _kind) internal view returns (bool) {
         if (_kind == Collateral.Kind.VAULT) {
+            //@note signifying which collateral type triggered liquidation
             return (_agent.collateralsUnderwater & Agent.LF_VAULT) != 0;
         } else {
             // AGENT_POOL collateral cannot be underwater (it only affects minting),
             // so this function will only be used for VAULT and POOL
+            //@audit-low this should rather be a require statement than assert
             assert(_kind == Collateral.Kind.POOL);
             return (_agent.collateralsUnderwater & Agent.LF_POOL) != 0;
         }
@@ -156,6 +158,7 @@ library Agents {
         view
         returns (Agent.WithdrawalAnnouncement storage)
     {
+        //@audit-low this should rather be a require statement
         assert(_kind != Collateral.Kind.POOL); // agent cannot withdraw from pool
         return _kind == Collateral.Kind.VAULT
             ? _agent.vaultCollateralWithdrawalAnnouncement

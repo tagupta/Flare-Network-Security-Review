@@ -78,8 +78,10 @@ library Agent {
         // Bitmap signifying which collateral type(s) triggered liquidation (LF_VAULT | LF_POOL).
         uint8 collateralsUnderwater;
         // Amount of collateral locked by collateral reservation.
+        //@note  fAsset debt (in AMG)
         uint64 reservedAMG;
         // Amount of collateral backing minted fassets.
+        //@notefAsset debt (in AMG)
         uint64 mintedAMG;
         // The amount of fassets being redeemed. In this case, the fassets were already burned,
         // but the collateral must still be locked to allow payment in case of redemption failure.

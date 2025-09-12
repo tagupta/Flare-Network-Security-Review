@@ -38,6 +38,7 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
     error OnlyAgentVaultOrPool();
     error CollateralNotDeprecated();
     error CollateralWithdrawalAnnounced();
+    //@audit-low unused error
     error FAssetNotTerminated();
 
     /**
@@ -57,6 +58,7 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
         return _announceWithdrawal(Collateral.Kind.VAULT, _agentVault, _valueNATWei);
     }
 
+    //@audit-low incorrect documentation
     /**
      * Agent is going to withdraw `_valueNATWei` amount of collateral from agent vault.
      * This has to be announced and agent must then wait `withdrawalWaitMinSeconds` time.
@@ -121,6 +123,7 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
      * May pull agent out of liquidation.
      * NOTE: may only be called from an agent vault or collateral pool, not from an EOA address.
      */
+
     function updateCollateral(address _agentVault, IERC20 _token) external {
         Agent.State storage agent = Agent.get(_agentVault);
         require(msg.sender == _agentVault || msg.sender == address(agent.collateralPool), OnlyAgentVaultOrPool());
@@ -141,6 +144,10 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
         // could work without this check, but would need timelock, otherwise there can be
         // withdrawal without announcement by switching, withdrawing and switching back
         CollateralTypeInt.Data storage currentCollateral = agent.getVaultCollateral();
+        //@audit-q just checking that the value is non zero, but not checking if the block.timesatmp is past the validUntil. In this case wouldn't the agent get liquidated? Seemingly it is allowing for switching after the duration?
+        //@audit-q It depends on whether the protocol has an automated process that detects and liquidates agents using deprecated collateral immediately after validUntil is reached.
+        //@note this will be more robust to allow switching -
+        // require(currentCollateral.validUntil != 0 && block.timestamp <= currentCollateral.validUntil, CollateralNotDeprecated());
         require(currentCollateral.validUntil != 0, CollateralNotDeprecated());
         // cannot switch if collateral withdrawal is announced
         Agent.WithdrawalAnnouncement storage withdrawal = agent.withdrawalAnnouncement(Collateral.Kind.VAULT);
@@ -165,6 +172,7 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
         // upgrade pool wnat
         if (agent.poolCollateralIndex != state.poolCollateralIndex) {
             agent.poolCollateralIndex = state.poolCollateralIndex;
+            //@note later
             agent.collateralPool.upgradeWNatContract(wNat);
             emit IAssetManagerEvents.AgentCollateralTypeChanged(
                 _agentVault, uint8(CollateralType.Class.POOL), address(wNat)
@@ -180,11 +188,13 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
         // only agents that are not being liquidated can withdraw
         // however, if the agent is in FULL_LIQUIDATION and totally liquidated,
         // the withdrawals must still be possible, otherwise the collateral gets locked forever
+        //@note agent.totalBackedAMG() => the agent has been fully liquidated and this enables them to withdraw the remaining collateral
         require(agent.status == Agent.Status.NORMAL || agent.totalBackedAMG() == 0, WithdrawalInvalidAgentStatus());
         Agent.WithdrawalAnnouncement storage withdrawal = agent.withdrawalAnnouncement(_kind);
         if (_amountWei > withdrawal.amountWei) {
             AssetManagerSettings.Data storage settings = Globals.getSettings();
             Collateral.Data memory collateralData = AgentCollateral.singleCollateralData(agent, _kind);
+            //@note collateralData -> kind, fullCollateral, amgToTokenWei
             // announcement increased - must check there is enough free collateral and then lock it
             // in this case the wait to withdrawal restarts from this moment
             uint256 increase = _amountWei - withdrawal.amountWei;

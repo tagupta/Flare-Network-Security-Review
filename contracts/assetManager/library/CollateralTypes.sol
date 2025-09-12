@@ -23,9 +23,11 @@ library CollateralTypes {
     error NotAPoolCollateralAtZero();
     error AtLeastTwoCollateralsRequired();
 
+    //@note the system can whitelist many tokens (e.g., FLR, SGB, USDC) that agents are allowed to choose from when they set up their vault.
     function initialize(CollateralType.Data[] memory _data) internal {
         require(_data.length >= 2, AtLeastTwoCollateralsRequired());
         // initial pool collateral token
+        //@note pool collateral token is always present at index 0
         require(_data[0].collateralClass == CollateralType.Class.POOL, NotAPoolCollateralAtZero());
         _add(_data[0]);
         _setPoolCollateralTypeIndex(0);
@@ -41,6 +43,7 @@ library CollateralTypes {
         _add(_data);
     }
 
+    //@note indicating that the index of pool collateral can be changed later
     function setPoolWNatCollateralType(CollateralType.Data memory _data) internal {
         uint256 index = _add(_data);
         _setPoolCollateralTypeIndex(index);
@@ -87,6 +90,11 @@ library CollateralTypes {
         uint256 index = state.collateralTokenIndex[_tokenKey(_collateralClass, _token)];
         return index > 0;
     }
+
+    //@note
+    //If validUntil is 0 -> Token is valid.
+    //If validUntil is a future timestamp -> Token is valid.
+    //If validUntil is a past timestamp -> Token is invalid.
 
     function isValid(CollateralTypeInt.Data storage _token) internal view returns (bool) {
         return _token.validUntil == 0 || _token.validUntil > block.timestamp;
@@ -161,6 +169,7 @@ library CollateralTypes {
         });
     }
 
+    //@note Final Key: [ 96-bit Class Value | 160-bit Token Address ]
     function _tokenKey(CollateralType.Class _collateralClass, IERC20 _token) private pure returns (bytes32) {
         return bytes32((uint256(_collateralClass) << 160) | uint256(uint160(address(_token))));
     }

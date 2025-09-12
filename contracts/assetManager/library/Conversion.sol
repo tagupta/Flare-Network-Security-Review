@@ -154,10 +154,12 @@ library Conversion {
         return _assetPrice.mulDiv(10 ** (expPlus - expMinus), _tokenPrice);
     }
 
+    //@note fassets => collateral ?
     function convertAmgToTokenWei(uint256 _valueAMG, uint256 _amgToTokenWeiPrice) internal pure returns (uint256) {
         return _valueAMG.mulDiv(_amgToTokenWeiPrice, AMG_TOKEN_WEI_PRICE_SCALE);
     }
 
+    //@note collateral amount => fasssets can be backed ?
     function convertTokenWeiToAMG(uint256 _valueNATWei, uint256 _amgToTokenWeiPrice) internal pure returns (uint256) {
         return _valueNATWei.mulDiv(AMG_TOKEN_WEI_PRICE_SCALE, _amgToTokenWeiPrice);
     }

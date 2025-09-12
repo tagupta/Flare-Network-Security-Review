@@ -225,6 +225,7 @@ library AgentCollateral {
         returns (uint256)
     {
         uint256 totalAMG = totalBackedAMG(_agent, _data.kind);
+        //@note value of the debt
         uint256 backingTokenWei = Conversion.convertAmgToTokenWei(totalAMG, _data.amgToTokenWeiPrice);
         if (backingTokenWei == 0) return 1e10; // nothing minted - ~infinite collateral ratio (but avoid overflows)
         return _data.fullCollateral.mulDiv(SafePct.MAX_BIPS, backingTokenWei);

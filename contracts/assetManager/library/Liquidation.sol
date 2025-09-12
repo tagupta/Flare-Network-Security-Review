@@ -49,6 +49,8 @@ library Liquidation {
         uint256 targetRatioVaultCollateralBIPS = _targetRatioBIPS(_agent, Collateral.Kind.VAULT);
         uint256 targetRatioPoolBIPS = _targetRatioBIPS(_agent, Collateral.Kind.POOL);
         // if agent is safe, restore status to NORMAL
+        //@audit-q what if agent tries to front run this transaction with oracle price manipulation
+        //@audit-high
         if (cr.vaultCR >= targetRatioVaultCollateralBIPS && cr.poolCR >= targetRatioPoolBIPS) {
             _agent.status = Agent.Status.NORMAL;
             _agent.liquidationStartedAt = 0;
@@ -63,7 +65,7 @@ library Liquidation {
         return CRData({
             vaultCR: vaultCR,
             poolCR: poolCR,
-            amgToC1WeiPrice: amgToC1WeiPrice,
+            amgToC1WeiPrice: amgToC1WeiPrice, //@note amgToVaultCollateralWei price
             amgToPoolWeiPrice: amgToPoolWeiPrice
         });
     }
@@ -80,15 +82,20 @@ library Liquidation {
             _collateralDataWithTrusted(_agent, _collateralKind);
         uint256 ratio = AgentCollateral.collateralRatioBIPS(_data, _agent);
         uint256 ratioTrusted = AgentCollateral.collateralRatioBIPS(_trustedData, _agent);
+        //@audit-q using regular price over trusted price
+        //@audit-high see how catastrophic this can be?
         _amgToTokenWeiPrice = _data.amgToTokenWeiPrice;
         _collateralRatioBIPS = Math.max(ratio, ratioTrusted);
     }
 
     // Calculate the amount of liquidation that gets agent to safety.
     // assumed: agentStatus == LIQUIDATION/FULL_LIQUIDATION
+    //@note Given an agent's current unhealthy state, what's the maximum amount of their debt we can liquidate to restore their health, without over-liquidating
     function maxLiquidationAmountAMG(
         Agent.State storage _agent,
+        //@note agent's current collateral ratio for the given kind
         uint256 _collateralRatioBIPS,
+        //@note A system parameter representing the minimum possible collateral ratio we can achieve through liquidation.
         uint256 _factorBIPS,
         Collateral.Kind _collateralKind
     ) internal view returns (uint256) {
@@ -104,6 +111,9 @@ library Liquidation {
         if (_collateralRatioBIPS <= _factorBIPS) {
             return _agent.mintedAMG; // cannot achieve target - liquidate all
         }
+        //@note Amount to Liquidate = Total Debt * (Improvement Needed) / (Max Improvement Possible)
+        //@note (targetRatioBIPS - _collateralRatioBIPS): This is the improvement needed in the ratio
+        //@note (targetRatioBIPS - _factorBIPS): This is the maximum possible improvement
         uint256 maxLiquidatedAMG = AgentCollateral.totalBackedAMG(_agent, _collateralKind).mulDivRoundUp(
             targetRatioBIPS - _collateralRatioBIPS, targetRatioBIPS - _factorBIPS
         );
