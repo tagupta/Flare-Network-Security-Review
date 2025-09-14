@@ -15,6 +15,7 @@ library LiquidationPaymentStrategy {
 
     // Liquidation premium step (depends on time, but is capped by the current collateral ratio)
     // assumed: agentStatus == LIQUIDATION/FULL_LIQUIDATION
+    //@audit-high suspectible to delay attack
     function currentLiquidationFactorBIPS(Agent.State storage _agent, uint256 _vaultCR, uint256 _poolCR)
         internal
         view
@@ -27,6 +28,8 @@ library LiquidationPaymentStrategy {
         // Current algorithm for splitting payment: use liquidationCollateralFactorBIPS for vault collateral and
         // pay the rest from pool. If any factor exceeds the CR of that collateral, pay that collateral at
         // its CR and pay more of the other. If both collaterals exceed CR, limit both to their CRs.
+        //@note _c1FactorBIPS: What percentage of the debt value should be paid from the agent's vault collateral.
+        //@note liquidationFactorVaultCollateralBIPS: that defines how much of the total premium should ideally be paid from the vault.
         _c1FactorBIPS = Math.min(settings.liquidationFactorVaultCollateralBIPS[step], factorBIPS);
         // prevent paying with invalid token (if there is enough of the other tokens)
         CollateralTypeInt.Data storage vaultCollateral = _agent.getVaultCollateral();
@@ -42,6 +45,7 @@ library LiquidationPaymentStrategy {
         if (_c1FactorBIPS > _vaultCR) {
             _c1FactorBIPS = _vaultCR;
         }
+        //@note What percentage of the debt value should be paid from the shared pool collateral.
         _poolFactorBIPS = factorBIPS - _c1FactorBIPS;
         if (_poolFactorBIPS > _poolCR) {
             _poolFactorBIPS = _poolCR;
@@ -51,6 +55,10 @@ library LiquidationPaymentStrategy {
 
     // Liquidation premium step (depends on time since liquidation was started)
     // assumed: agentStatus == LIQUIDATION/FULL_LIQUIDATION
+    //@audit-high this is susceptible to MEV attack
+    //@note They only need to ensure that no other liquidation transaction is included in the first block where the premium increases.
+    //@note Calculate Target Block: They calculate the exact target timestamp T when the step will increase:
+    //T = liquidationStartedAt + (step_number * liquidationStepSeconds)
     function _currentLiquidationStep(Agent.State storage _agent) private view returns (uint256) {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // calculate premium step based on time since liquidation started

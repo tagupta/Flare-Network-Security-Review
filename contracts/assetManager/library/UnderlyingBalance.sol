@@ -15,6 +15,8 @@ library UnderlyingBalance {
     using SafePct for uint256;
     using Agent for Agent.State;
 
+    //@audit-q need to check whether _balanceChange is UBA converted or not?
+    //@audit-q Is the caller of updateBalance responsible for converting the amount into UBA (Underlying Balance Amount) units before passing it to this function?
     function updateBalance(Agent.State storage _agent, int256 _balanceChange) internal {
         int256 newBalance = _agent.underlyingBalanceUBA + _balanceChange;
         uint256 requiredBalance = requiredUnderlyingUBA(_agent);
@@ -28,6 +30,7 @@ library UnderlyingBalance {
 
     // Like updateBalance, but it can never make balance negative and trigger liquidation.
     // Separate implementation to avoid dependency on liquidation for balance increases.
+    //@audit-q need to check whether _balanceChange is UBA converted or not?
     function increaseBalance(Agent.State storage _agent, uint256 _balanceIncrease) internal {
         _agent.underlyingBalanceUBA += _balanceIncrease.toInt256().toInt128();
         emit IAssetManagerEvents.UnderlyingBalanceChanged(_agent.vaultAddress(), _agent.underlyingBalanceUBA);

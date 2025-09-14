@@ -14,7 +14,6 @@ import {AssetManagerSettings} from "../../userInterfaces/data/AssetManagerSettin
 // To batch operations and reduce on-chain computation. Instead of processing every single Satoshi, the system processes in "chunks" or lots. This is a gas optimization and helps manage granularity.
 library Conversion {
     using SafePct for uint256;
-    //@note 1 AMG = 1e9 NAT Wei
     uint256 internal constant AMG_TOKEN_WEI_PRICE_SCALE_EXP = 9;
     uint256 internal constant AMG_TOKEN_WEI_PRICE_SCALE = 10 ** AMG_TOKEN_WEI_PRICE_SCALE_EXP;
     uint256 internal constant NAT_WEI = 1e18;

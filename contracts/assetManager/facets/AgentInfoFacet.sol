@@ -112,6 +112,7 @@ contract AgentInfoFacet is AssetManagerBase {
         return Agent.getAllowDestroyed(_agentVault).ownerManagementAddress;
     }
 
+    //@audit-low could have directly called getVaultCollateralToken()
     function getAgentVaultCollateralToken(address _agentVault) external view returns (IERC20) {
         return Agent.get(_agentVault).getVaultCollateral().token;
     }
@@ -158,6 +159,8 @@ contract AgentInfoFacet is AssetManagerBase {
         return sysMinCR;
     }
 
+    //@note The Premium: _vaultFactorBIPS + _poolFactorBIPS => How much will they get paid?
+    //@note The Capacity: _maxLiquidatedUBA => What's the maximum amount of debt they can liquidate?
     function _getLiquidationFactorsAndMaxAmount(Agent.State storage _agent, Liquidation.CRData memory _cr)
         private
         view
