@@ -2,7 +2,9 @@
 pragma solidity ^0.8.27;
 
 library UnderlyingAddressOwnership {
+    //@audit-low unused custom error
     error InvalidAddressOwnershipProof();
+    //@audit-low unused custom error
     error EOAProofRequired();
     error AddressAlreadyClaimed();
 

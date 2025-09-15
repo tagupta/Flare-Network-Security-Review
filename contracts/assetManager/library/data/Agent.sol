@@ -93,7 +93,8 @@ library Agent {
         // On redemption payment failure, redeemer will be paid only in vault collateral in this case
         // (and will be paid less if there isn't enough - small extra risk for pool token holders).
         // There will always be `poolRedeemingAMG <= redeemingAMG`.
-        //@note The vault collateral portion of redeemingAMG that remains locked after an Agent has exited the pool.
+        //@note self-close" refers exclusively to the agent acting on their own vault
+        //@note poolRedeemingAMG is the amount of fAssets being redeemed by users (not the agent), for which the pool's collateral must be locked as a guarantee.
         uint64 poolRedeemingAMG;
         // When lot size changes, there may be some leftover after redemption that doesn't fit
         // a whole lot size. It is added to dustAMG and can be recovered via self-close.

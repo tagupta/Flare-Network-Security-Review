@@ -16,6 +16,7 @@ contract AgentPingFacet is AssetManagerBase, IAgentPing {
     /**
      * @inheritdoc IAgentPing
      */
+    //@note The "owner" is likely a smart contract or service designed to automatically handle these requests.
     function agentPingResponse(address _agentVault, uint256 _query, string memory _response)
         external
         onlyAgentVaultOwner(_agentVault)

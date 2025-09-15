@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+//@note RedemptionQueue is a double linked list maintained at both global level and agent level
 library RedemptionQueue {
     struct Ticket {
         address agentVault;
         uint64 valueAMG;
-        uint64 prev;
-        uint64 next;
-        uint64 prevForAgent;
-        uint64 nextForAgent;
+        uint64 prev; //@note previous pointer of the current ticket node in global double linked list - ticketId
+        uint64 next; //@note next pointer in global double linked list
+        uint64 prevForAgent; //@note refers to prev node in agent's personal double linked list
+        uint64 nextForAgent; //@note refers to the next node in the agent's personal double linked list
     }
 
     struct AgentQueue {
-        uint64 firstTicketId;
-        uint64 lastTicketId;
+        uint64 firstTicketId; //@note oldest redemption in the agent's queue
+        uint64 lastTicketId; //@note latest redemption in the agent's queue
     }
 
     struct State {
         mapping(uint64 => Ticket) tickets; // mapping redemption_id=>ticket
         mapping(address => AgentQueue) agents; // mapping address=>dl-list
-        uint64 firstTicketId;
-        uint64 lastTicketId;
+        uint64 firstTicketId; //@note oldest redemption in the global queue
+        uint64 lastTicketId; //@note newest redemption in the global queue
         uint64 newTicketId; // increment before assigning to ticket (to avoid 0)
     }
 

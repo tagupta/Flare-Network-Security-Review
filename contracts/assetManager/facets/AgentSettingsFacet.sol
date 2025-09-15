@@ -12,12 +12,22 @@ import {AssetManagerSettings} from "../../userInterfaces/data/AssetManagerSettin
 contract AgentSettingsFacet is AssetManagerBase {
     using SafeCast for uint256;
 
+    //@note The total fee charged by the protocol for minting fAssets
     bytes32 internal constant FEE_BIPS = keccak256("feeBIPS");
+    //@note The portion of the total FEE_BIPS that is allocated to the shared collateral pool and its liquidity providers.
     bytes32 internal constant POOL_FEE_SHARE_BIPS = keccak256("poolFeeShareBIPS");
+    //@note The portion of the total redemption fee that is allocated to the shared collateral pool.
     bytes32 internal constant REDEMPTION_POOL_FEE_SHARE_BIPS = keccak256("redemptionPoolFeeShareBIPS");
+    //@note The minimum collateralization ratio that an `agent` must maintain for their vault collateral (e.g., USDC) in order to mint new fAssets. This is set by the agent themselves, but cannot be below a system minimum.
     bytes32 internal constant MINTING_VAULT_COLLATERAL_RATIO_BIPS = keccak256("mintingVaultCollateralRatioBIPS");
+    //@note The minimum collateralization ratio that an agent must maintain from their share of the pool collateral in order to mint. This is also agent-set with a system floor.
     bytes32 internal constant MINTING_POOL_COLLATERAL_RATIO_BIPS = keccak256("mintingPoolCollateralRatioBIPS");
+    //@note A discount factor applied when an agent buys fAssets from the market to burn them (e.g., during liquidation or to reduce their minting).
+    //@note To incentivize agents to proactively maintain their collateralization. If their ratio gets low, they can buy fAssets at a discount to burn them, which improves their ratio. This is a crucial self-healing mechanism.
+    //@audit-high need to see how this transaction can be front run by startLiquidation function by a liquidator
     bytes32 internal constant BUY_FASSET_BY_AGENT_FACTOR_BIPS = keccak256("buyFAssetByAgentFactorBIPS");
+    //@note The minimum collateralization ratio the entire system must maintain after a liquidity provider withdraws their stake from the shared pool.
+    //@note Purpose: This is a safety check to prevent LPs from withdrawing their funds if it would push the entire system below a safe collateralization level. It prevents a "bank run" on the pool that could collapse the protocol
     bytes32 internal constant POOL_EXIT_COLLATERAL_RATIO_BIPS = keccak256("poolExitCollateralRatioBIPS");
 
     error NoPendingUpdate();
@@ -110,6 +120,7 @@ contract AgentSettingsFacet is AssetManagerBase {
         } else if (_hash == POOL_EXIT_COLLATERAL_RATIO_BIPS) {
             AgentUpdates.setPoolExitCollateralRatioBIPS(_agent, _value);
         } else {
+            //@audit-info this is rather be replaced with require
             assert(false);
         }
     }
