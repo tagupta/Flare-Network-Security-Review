@@ -193,10 +193,10 @@ abstract contract GovernedBase is IGoverned {
         // pass exact return or revert data - needs to be done in assembly
         //solhint-disable-next-line no-inline-assembly
         assembly {
-            let size := returndatasize()
+            let size := returndatasize() //@note Gets the size (in bytes) of the data returned by the last external call.
             let ptr := mload(0x40)
-            mstore(0x40, add(ptr, size))
-            returndatacopy(ptr, 0, size)
+            mstore(0x40, add(ptr, size)) //@note Updates the free memory pointer to reserve the space we're about to use.
+            returndatacopy(ptr, 0, size) //@note Copies the size bytes of return data (from the last call) into the reserved space in memory, starting at location ptr.
             if _success { return(ptr, size) }
             revert(ptr, size)
         }

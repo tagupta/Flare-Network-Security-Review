@@ -99,6 +99,7 @@ library Redemptions {
         }
     }
 
+    //@note recreation of redemption tickets is a failure handler
     function reCreateRedemptionTicket(Agent.State storage _agent, Redemption.Request storage _request) internal {
         AgentBacking.endRedeemingAssets(_agent, _request.valueAMG, _request.poolSelfClose);
         AgentBacking.createNewMinting(_agent, _request.valueAMG);
@@ -109,7 +110,7 @@ library Redemptions {
         Redemption.Request storage _request,
         Redemption.Status _status
     ) internal {
-        assert(_status >= Redemption.Status.SUCCESSFUL); // must be a final status
+        assert(_status >= Redemption.Status.SUCCESSFUL); // must be a final status [Successful, failed, blocked, rejected]
         _request.status = _status;
         releaseTransferToCoreVault(_redemptionRequestId, _request);
     }

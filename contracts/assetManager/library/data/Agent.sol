@@ -134,7 +134,7 @@ library Agent {
         // 0 - no verification, 1 - manual verification, ...
         uint32 __handshakeType; // only storage placeholder
         // There can only be one transfer to core vault per agent active at any time.
-        uint64 activeTransferToCoreVault;
+        uint64 activeTransferToCoreVault; //@note stores the redemption request
         // the request id of the active return from core vault
         uint64 activeReturnFromCoreVaultId;
         // part of the agent's reservedAMG for the core vault return

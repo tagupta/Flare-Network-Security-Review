@@ -13,8 +13,10 @@ contract CoreVaultManagerProxy is ERC1967Proxy {
         address _addressUpdater,
         address _assetManager,
         bytes32 _chainId,
+        //@note  multi-signature wallet or a highly secure, privileged account that has control over the funds in the core vault on the underlying chain
         string memory _custodianAddress,
         string memory _coreVaultAddress,
+        //@note This is a nonce or a counter used to prevent replay attacks and ensure the correct order of operations for instructions sent to the _custodianAddress.
         uint256 _nextSequenceNumber
     )
         ERC1967Proxy(

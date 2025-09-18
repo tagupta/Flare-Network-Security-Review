@@ -43,6 +43,7 @@ library Transfers {
      * @param _recipient the recipient address
      * @param _amount the amount in NAT Wei
      */
+    //@note deposits NAT tokens and recipient gets WNAT tokens
     function depositWNat(IWNat _wNat, address _recipient, uint256 _amount) internal {
         if (_amount > 0) {
             _wNat.depositTo{value: _amount}(_recipient);

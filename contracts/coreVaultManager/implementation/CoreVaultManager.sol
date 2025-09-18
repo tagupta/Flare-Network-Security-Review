@@ -54,12 +54,14 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
     // return request before starting a new one). The number of agents cannot increase arbitrarily,
     // as agents that are allowed return are controlled by the governance. The total number will always be < ~10.
     // Therefore loops over cancelableTransferRequests are actually bounded and will not run out of gas.
+    //@note Agent operational withdrawals
     uint256[] private cancelableTransferRequests;
 
     // NOTE: The nonCancelableTransferRequests correspond to requests for direct core vault redemption.
     // The addresses to which the redemptions can be made are controlled by governance and the requests
     // to the same address get merged, so there will always be a limited number of requests (< ~10).
     // Therefore loops over nonCancelableTransferRequests are actually bounded and will not run out of gas.
+    //@note Direct user redemptions
     uint256[] private nonCancelableTransferRequests;
 
     mapping(uint256 transferRequestId => TransferRequest) private transferRequestById;
@@ -78,6 +80,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
     /// minimal amount left in the core vault after escrowing
     uint128 private minimalAmount;
     /// fee
+    //@note This is a fixed fee amount (in the native token) charged per request, not per amount. It's a service fee for using the system.
     uint128 private fee;
 
     /// available funds in the core vault
@@ -250,6 +253,8 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
     /**
      * @inheritdoc ICoreVaultManager
      */
+    //@audit-info
+    //@note he security of the system critically depends on the governance mechanism properly limiting the number of agents and redemption addresses. If governance ever fails to do this and allows the arrays to grow large, the gas DoS vulnerability would immediately become active. This places a high degree of trust on the governance process.
     function triggerInstructions() external notPaused returns (uint256 _numberOfInstructions) {
         require(triggeringAccounts.contains(msg.sender), NotAuthorized());
         _processEscrows(type(uint256).max); // process all escrows
@@ -325,6 +330,9 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
         nonCancelableTransferRequestsAmount = amountTmp;
 
         uint128 escrowAmountTmp = escrowAmount;
+        //@note funds are not available
+        //@note all the requests are not processed yet
+        //@note no new escrows will be created
         if (escrowAmountTmp == 0 || length > 0 || cancelableTransferRequests.length > 0) {
             // update the state but skip creating new escrows
             availableFunds = availableFundsTmp;
@@ -333,6 +341,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
         }
 
         // create escrows
+        //@note If we have excess capital and no pending withdrawals, use that capital to create new escrows. This enables users on the other chain (Flare) to mint new FAssets by locking collateral in these escrows.
         uint256 preimageHashIndexTmp = nextUnusedPreimageHashIndex;
         uint256 minFundsToTriggerEscrow = minimalAmount + escrowAmountTmp + feeTmp;
         length = preimageHashes.length();
@@ -506,6 +515,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
      * @param _preimageHashes List of preimage hashes.
      * NOTE: may only be called by the governance.
      */
+    //@audit-med not tackling the scenario for active escrows where escrowIndex == nextUnprocessedEscrowIndex
     function setEscrowsFinished(bytes32[] calldata _preimageHashes) external onlyImmediateGovernance {
         uint128 availableFundsTmp = availableFunds;
         uint128 escrowedFundsTmp = escrowedFunds;
@@ -731,16 +741,18 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
      * @param _maxCount Maximum number of escrows to process.
      * @return _allProcessed True if all escrows were processed, false otherwise.
      */
+    //@note this functions exists to handle all the garbage escrows
     function _processEscrows(uint256 _maxCount) internal returns (bool _allProcessed) {
         uint128 availableFundsTmp = availableFunds;
         uint128 escrowedFundsTmp = escrowedFunds;
         // process all expired or finished escrows
         uint256 index = nextUnprocessedEscrowIndex;
+        //@note the current escrow is either expired or finished
         while (
             _maxCount > 0 && index < escrows.length
                 && (escrows[index].expiryTs <= block.timestamp || escrows[index].finished)
         ) {
-            if (!escrows[index].finished) {
+            if (!escrows[index].finished) { //@note Not finished but expired
                 // if the escrow is not finished, add the amount to the available funds
                 Escrow storage escrow = escrows[index];
                 uint128 amount = escrow.amount;
@@ -756,6 +768,8 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
         availableFunds = availableFundsTmp;
         escrowedFunds = escrowedFundsTmp;
 
+        //@note This means we've processed all expired/finished escrowss
+        //@note _allProcessed: There are no more expired or finished escrows left to process at this moment.
         _allProcessed = _maxCount > 0 || index == escrows.length
             || (escrows[index].expiryTs > block.timestamp && !escrows[index].finished);
         if (!_allProcessed) {
@@ -777,6 +791,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
      * Gets the next escrow end timestamp.
      * @return Next escrow end timestamp.
      */
+    //@note returns the expiry for a new escrow
     function _getNextEscrowEndTimestamp() internal view returns (uint64) {
         uint256 escrowEndTimestamp = 0;
         // find the last unfinished escrow
@@ -786,7 +801,9 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
                 break;
             }
         }
+        //@note The new escrow should expire after the most recent unfinished escrow.
         escrowEndTimestamp = Math.max(escrowEndTimestamp, block.timestamp);
+        //@note The new escrow should last at least one day from the base timestamp we just found.
         escrowEndTimestamp += 1 days;
         // slither-disable-next-line weak-prng
         escrowEndTimestamp = escrowEndTimestamp - (escrowEndTimestamp % 1 days) + escrowEndTimeSeconds;

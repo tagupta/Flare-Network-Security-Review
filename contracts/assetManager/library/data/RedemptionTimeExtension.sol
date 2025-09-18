@@ -9,12 +9,12 @@ library RedemptionTimeExtension {
     using SafeMath64 for uint64;
 
     struct AgentTimeExtensionData {
-        uint64 extendedTimestamp;
+        uint64 extendedTimestamp; //@note This is a per-agent state variable
     }
 
     struct State {
         // settings
-        uint64 redemptionPaymentExtensionSeconds;
+        uint64 redemptionPaymentExtensionSeconds; //@note This is a global setting.  It defines the fixed delay (in seconds) that is added to the redemption timeline for each redemption request.
         // per agent state
         mapping(address _agentVault => AgentTimeExtensionData) agents;
     }
@@ -24,6 +24,7 @@ library RedemptionTimeExtension {
      * Implements "leaky bucket" algorithm, popular in rate-limiters.
      * @param _agentVault the agent vault address being redeemed
      */
+    //@note This tells the caller how many seconds the agent must wait before they are allowed to process this redemption.
     function extendTimeForRedemption(address _agentVault) internal returns (uint64) {
         State storage state = getState();
         AgentTimeExtensionData storage agentData = state.agents[_agentVault];
