@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+//@note The High Bits (Bits 192-255): Store the operation type.
+//@note The Low Bits (Bits 0-191): Store the unique identifier (an ID or an address).
 library PaymentReference {
     uint256 private constant TYPE_SHIFT = 192;
     uint256 private constant TYPE_MASK = ((1 << 64) - 1) << TYPE_SHIFT;
     uint256 private constant LOW_BITS_MASK = (1 << TYPE_SHIFT) - 1;
     uint256 private constant ID_RANDOMIZATION = 1000;
-    uint256 private constant MAX_ID = (1 << 64) - 1;
+    uint256 private constant MAX_ID = (1 << 64) - 1; //@note 2^64-1
 
     // common prefix 0x464250526641 = hex('FBPRfA' - Flare Bridge Payment Reference / fAsset)
 

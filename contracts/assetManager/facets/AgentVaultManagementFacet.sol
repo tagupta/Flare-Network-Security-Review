@@ -66,9 +66,11 @@ contract AgentVaultManagementFacet is AssetManagerBase {
         // management address must be whitelisted
         Agents.requireWhitelisted(ownerManagementAddress);
         // require valid address
+        //@audit-q whose address is this?
         TransactionAttestation.verifyAddressValidity(_addressProof);
         IAddressValidity.ResponseBody memory avb = _addressProof.data.responseBody;
         require(avb.isValid, AddressInvalid());
+        //@note making sure that the address is not the address of core vault
         require(avb.standardAddressHash != CoreVaultClient.coreVaultUnderlyingAddressHash(), AddressUsedByCoreVault());
         IIAssetManager assetManager = IIAssetManager(address(this));
         // create agent vault
@@ -292,6 +294,7 @@ contract AgentVaultManagementFacet is AssetManagerBase {
     }
 
     // Returns management owner's address, given either work or management address.
+    //@note _ownerAddress => work address
     function _getManagementAddress(address _ownerAddress) private view returns (address) {
         address ownerManagementAddress = Globals.getAgentOwnerRegistry().getManagementAddress(_ownerAddress);
         return ownerManagementAddress != address(0) ? ownerManagementAddress : _ownerAddress;

@@ -109,6 +109,8 @@ library Conversion {
     {
         (uint256 assetPrice, uint256 assetTs, uint256 assetFtsoDec) =
             readFtsoPrice(_token.assetFtsoSymbol, _fromTrustedProviders);
+            //@note This means there is an FTSO that provides a direct exchange rate between the asset (e.g., BTC) and the native token (e.g., FLR)
+            //@note USDC/FLR
         if (_token.directPricePair) {
             uint256 price = calcAmgToTokenWeiPrice(_token.decimals, 1, 0, assetPrice, assetFtsoDec);
             return (price, assetTs, assetTs);

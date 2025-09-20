@@ -130,6 +130,7 @@ contract CollateralPoolToken is IICollateralPoolToken, ERC20, UUPSUpgradeable {
         }
         // in agent payout, locked tokens can be burnt without a timelock update,
         // which makes timelockedBalance > totalBalance
+        //@audit-q revisit the condtion when timelocked >= totalBalance
         uint256 totalBalance = balanceOf(_account);
         _timelocked = (_timelocked < totalBalance) ? _timelocked : totalBalance;
     }
@@ -139,6 +140,7 @@ contract CollateralPoolToken is IICollateralPoolToken, ERC20, UUPSUpgradeable {
     }
 
     function _beforeTokenTransfer(address _from, address, /* _to */ uint256 _amount) internal override {
+        //@note the collateral pool needs to be able to move tokens even if they are not "debt-free" => collecting fees, liquidation/slashing
         if (msg.sender != collateralPool) {
             uint256 transferable = debtFreeBalanceOf(_from);
             require(_amount <= transferable, InsufficientTransferableBalance());

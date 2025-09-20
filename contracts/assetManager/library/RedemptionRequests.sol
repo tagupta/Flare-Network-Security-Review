@@ -56,7 +56,6 @@ library RedemptionRequests {
         uint128 redeemedValueUBA = Conversion.convertAmgToUBA(_data.valueAMG).toUint128();
         _requestId = _newRequestId(_poolSelfClose);
         // create in-memory request and then put it to storage to not go out-of-stack
-        //@audit-q local variable never being initialized
         Redemption.Request memory request;
         request.redeemerUnderlyingAddressHash = underlyingAddressHash;
         request.underlyingValueUBA = redeemedValueUBA;
@@ -106,16 +105,23 @@ library RedemptionRequests {
         );
     }
 
+    //@note Adversarial Conditions: An attacker might find a way to force the rapid creation of requests to exhaust the ID space faster than expected.
     function _newRequestId(bool _poolSelfClose) private returns (uint64) {
         AssetManagerState.State storage state = AssetManagerState.get();
         uint64 nextRequestId = state.newRedemptionRequestId + PaymentReference.randomizedIdSkip();
         // the requestId will indicate in the lowest bit whether it is a pool self close redemption
         // (+1 is added so that the request id still increases after clearing lowest bit)
+        //@note LSB to 1 if it's a pool self-close redemption, or 0 if it's a normal user redemption.
+        //@note The +1 before clearing the bit ensures the overall sequence still increases.
+        //@note & ~uint64(1) is a bitwise operation that clears the least significant bit (LSB)
+        //@audit-high DOS if nextRequestId reaches type(uint64).max
         uint64 requestId = ((nextRequestId + 1) & ~uint64(1)) | (_poolSelfClose ? 1 : 0);
         state.newRedemptionRequestId = requestId;
         return requestId;
     }
 
+    //@note _lastUnderlyingBlock: The last block number on the underlying chain by which the payment must be confirmed.
+    //@note _lastUnderlyingTimestamp: The last timestamp on the underlying chain by which the payment must be confirmed.
     function _lastPaymentBlock(address _agentVault, uint64 _additionalPaymentTime)
         private
         returns (uint64 _lastUnderlyingBlock, uint64 _lastUnderlyingTimestamp)
@@ -124,11 +130,20 @@ library RedemptionRequests {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // timeshift amortizes for the time that passed from the last underlying block update;
         // it also adds redemption time extension when there are many redemption requests in short time
+        //@note block.timestamp - state.currentUnderlyingBlockUpdatedAt: The real-world time elapsed since the last update.
+        //@note timeshift is the total amount of "real world time" the agent has had (plus some extra) to get the payment done.
         uint64 timeshift = block.timestamp.toUint64() - state.currentUnderlyingBlockUpdatedAt
             + RedemptionTimeExtension.extendTimeForRedemption(_agentVault) + _additionalPaymentTime;
+        //@note This converts the timeshift (seconds) into an estimated number of blocks on the underlying chain.
+        //@note averageBlockTimeMS: The average time to produce one block on the underlying chain, 2sec => 2000
+        //@note blockshift: get the estimated number of blocks that could have been produced in that time.
         uint64 blockshift = (uint256(timeshift) * 1000 / settings.averageBlockTimeMS).toUint64();
+        //@note settings.underlyingBlocksForPayment: A fixed safety buffer of blocks added to the deadline.
         _lastUnderlyingBlock = state.currentUnderlyingBlock + blockshift + settings.underlyingBlocksForPayment;
+        //@note A fixed safety buffer of seconds added to the deadline.
         _lastUnderlyingTimestamp =
             state.currentUnderlyingBlockTimestamp + timeshift + settings.underlyingSecondsForPayment;
+        //@note Block Deadline: Last_Known_Block + Estimated_Blocks_Elapsed + Safety_Block_Buffer
+        //@note Timestamp Deadline: Last_Known_Time + Real_Time_Elapsed + Safety_Time_Buffer
     }
 }

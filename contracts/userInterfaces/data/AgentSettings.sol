@@ -8,7 +8,7 @@ library AgentSettings {
         // The token used as vault collateral. Must be one of the tokens obtained by `getCollateralTypes()`,
         // with class VAULT.
         IERC20 vaultCollateralToken;
-        // The suffix to pool token name and symbol that identifies new vault's collateral pool token.
+        // The suffix to pool token name and symbol that identifies new vault's collateral pool token (CPT).
         // Must be unique within an asset manager.
         string poolTokenSuffix;
         // Minting fee. Normally charged to minters for publicly available agents, but must be set

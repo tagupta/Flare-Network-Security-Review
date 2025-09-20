@@ -91,6 +91,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         require(internalWithdrawal, OnlyInternalUse());
     }
 
+    //@audit-q why this isn't checking for the validity of _poolToken against address 0
     function setPoolToken(address _poolToken) external onlyAssetManager {
         require(address(token) == address(0), PoolTokenAlreadySet());
         token = IICollateralPoolToken(_poolToken);
@@ -116,8 +117,10 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         uint256 totalPoolTokens = token.totalSupply();
         if (totalPoolTokens == 0) {
             // this conditions are set for keeping a stable token value
+            //@note making sure that NAT being added is already more than the NAT being present in the pool
             require(msg.value >= totalCollateral, AmountOfCollateralTooLow());
-            AssetPrice memory assetPrice = _getAssetPrice();
+            AssetPrice memory assetPrice = _getAssetPrice(); //@note returning the price of BTC in terms of NAT wei
+            //@note NAT being added is also more than the fAssets present in the pool
             require(msg.value >= totalFAssetFees.mulDiv(assetPrice.mul, assetPrice.div), AmountOfCollateralTooLow());
         }
         // calculate obtained pool tokens and free f-assets
@@ -167,6 +170,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         _requireMinNatSupplyAfterExit(natShare);
         require(_staysAboveExitCR(natShare), CollateralRatioFallsBelowExitCR());
         // update the fasset fee debt
+        //@note virtualfee
         uint256 debtFAssetFeeShare = _tokensToVirtualFeeShare(_tokenShare);
         _deleteFAssetFeeDebt(msg.sender, debtFAssetFeeShare);
         token.burn(msg.sender, _tokenShare, false);
@@ -280,7 +284,9 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
     /**
      * Get the amount of fassets that need to be burned to perform self close exit.
      */
+    //@note _tokenAmountWei => CPT amount
     function fAssetRequiredForSelfCloseExit(uint256 _tokenAmountWei) external view returns (uint256) {
+        //@note tokenNatWeiEquiv => collateral (NAT)
         uint256 tokenNatWeiEquiv = totalCollateral.mulDiv(_tokenAmountWei, token.totalSupply());
         return _getFAssetRequiredToNotSpoilCR(tokenNatWeiEquiv);
     }
@@ -337,6 +343,9 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
 
     // support for liquidation / redemption default payments
     // slither-disable-next-line reentrancy-eth         // guarded by nonReentrant
+    //@note The payout function has one job: Make a payment to _recipient to cover a system shortfall, and simultaneously punish the responsible agent by burning their pool tokens (CPT)
+    //@note _amount: the amount to be paid to the liquidator
+    //@note _agentResponsibilityWei: the agent's fault
     function payout(address _recipient, uint256 _amount, uint256 _agentResponsibilityWei)
         external
         onlyAssetManager
@@ -358,7 +367,6 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         emit CPPaidOut(_recipient, _amount, slashedTokens);
     }
 
-    //@audit-q uses dangerous strict equality
     function _collateralToTokenShare(uint256 _collateral) internal view returns (uint256) {
         uint256 totalPoolTokens = token.totalSupply();
         if (totalCollateral == 0 || totalPoolTokens == 0) {
@@ -389,6 +397,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
             // f-asset required for CR to stay above exitCR (might not be needed)
             // solve (N - n) / (p / q (F - f)) >= cr get f = max(0, F - q (N - n) / (p cr))
             // assetPrice.mul > 0, exitCR > 1
+            //@note The excess FAssets that must be burned to keep the CR at the required minimum after withdrawal.
             resultWithoutRounding = MathUtils.subOrZero(
                 backedFAssets,
                 assetPrice.div * (totalCollateral - _natShare) * SafePct.MAX_BIPS / (assetPrice.mul * exitCR)
@@ -396,6 +405,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         } else {
             // f-asset that preserves pool CR (assume poolNatBalance >= natShare > 0)
             // solve (N - n) / (F - f) = N / F get f = n F / N
+            //@note The pro-rata share of FAssets that must be burned to keep the CR constant after withdrawal.
             resultWithoutRounding = backedFAssets.mulDivRoundUp(_natShare, totalCollateral);
         }
         return MathUtils.roundUp(resultWithoutRounding, assetManager.assetMintingGranularityUBA());
@@ -436,6 +446,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
     }
 
     //@audit-q uses dangerous equality
+    //@note How many of this user's FAsset tokens are truly 'free' and can be used (e.g., transferred, sold) without worrying about their associated fee debt?"
     function _debtFreeTokensOf(address _account) internal view returns (uint256) {
         int256 accountFeeDebt = _fAssetFeeDebtOf[_account];
         if (accountFeeDebt <= 0) {
@@ -503,7 +514,6 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         totalFAssetFees += _amount;
     }
 
-    //@audit-q uses dangerous strict equality
     function _createFAssetFeeDebt(address _account, uint256 _fAssets) internal {
         if (_fAssets == 0) return;
         int256 fAssets = _fAssets.toInt256();
@@ -516,6 +526,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
     function _deleteFAssetFeeDebt(address _account, uint256 _fAssets) internal {
         if (_fAssets == 0) return;
         int256 fAssets = _fAssets.toInt256();
+        //@note A negative feeDebt means the pool now owes them. This negative value is exactly equal to the net fees they earned (virtualFees - debt).
         _fAssetFeeDebtOf[_account] -= fAssets;
         totalFAssetFeeDebt -= fAssets;
         emit CPFeeDebtChanged(_account, _fAssetFeeDebtOf[_account]);
@@ -535,6 +546,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         }
     }
 
+    //@audit-q what if someone transfers wNAT tokens to this address itself?
     function _transferWNatTo(address _to, uint256 _amount) internal {
         if (_amount > 0) {
             totalCollateral -= _amount;

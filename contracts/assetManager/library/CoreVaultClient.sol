@@ -54,6 +54,7 @@ library CoreVaultClient {
     ) internal onlyEnabled {
         State storage state = getState();
         state.coreVaultManager.confirmPayment(_payment);
+        //@note this amount is in UBA
         uint256 receivedAmount = _payment.data.responseBody.receivedAmount.toUint256();
         emit ICoreVaultClient.TransferToCoreVaultSuccessful(_agent.vaultAddress(), _redemptionRequestId, receivedAmount);
     }
@@ -72,6 +73,7 @@ library CoreVaultClient {
         );
     }
 
+    //@audit-q have a better understanding to see why reservedAMG is getting reduced?
     function deleteReturnFromCoreVaultRequest(Agent.State storage _agent) internal {
         assert(_agent.activeReturnFromCoreVaultId != 0 && _agent.returnFromCoreVaultReservedAMG != 0);
         _agent.reservedAMG -= _agent.returnFromCoreVaultReservedAMG;
@@ -145,6 +147,8 @@ library CoreVaultClient {
         (, uint256 systemMinCrBIPS) = AgentCollateral.mintingMinCollateralRatio(_agent, _data.kind);
         uint256 collateralEquivAMG = Conversion.convertTokenWeiToAMG(_data.fullCollateral, _data.amgToTokenWeiPrice);
         uint256 maxSupportedAMG = collateralEquivAMG.mulDiv(SafePct.MAX_BIPS, systemMinCrBIPS);
+        //@note What is the minimum amount of debt that we must force this Agent to keep backed by their own personal collateral, instead of the Core Vault?
+        //@note safe, practical buffer. It's the amount of debt the system is comfortable forcing the agent to keep
         return maxSupportedAMG.mulBips(state.minimumAmountLeftBIPS);
     }
 

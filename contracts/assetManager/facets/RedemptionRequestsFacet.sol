@@ -142,6 +142,7 @@ contract RedemptionRequestsFacet is AssetManagerBase, ReentrancyGuard {
      * Used in self-close exit from the collateral pool when requested or when self-close amount is less than 1 lot.
      * Note: only collateral pool can call this method.
      */
+    //@note the amount of fassets that needs to be burned to keep the CR constant
     function redeemFromAgentInCollateral(address _agentVault, address _receiver, uint256 _amountUBA)
         external
         notEmergencyPaused

@@ -27,7 +27,7 @@ library Globals {
 
     function getPoolCollateral() internal view returns (CollateralTypeInt.Data storage) {
         AssetManagerState.State storage state = AssetManagerState.get();
-        return state.collateralTokens[state.poolCollateralIndex];
+        return state.collateralTokens[state.poolCollateralIndex];//@note wNAT
     }
 
     function getFAsset() internal view returns (IIFAsset) {

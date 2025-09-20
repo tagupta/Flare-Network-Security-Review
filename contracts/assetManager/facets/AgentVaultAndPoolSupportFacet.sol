@@ -44,7 +44,6 @@ contract AgentVaultAndPoolSupportFacet is AssetManagerBase {
 
     //@note What is the total amount of debt that the pool's funds are exposed to for this agent?
     //@note mintedAMG + reservedAMG: The pool backs the agent's active and pending debt.
-    //@note poolRedeemingAMG: The pool has already paid this out and is now exposed to the risk that the agent won't reimburse it. This is a real liability on the pool's balance sheet until it's repaid.
     function getFAssetsBackedByPool(address _agentVault) external view returns (uint256) {
         Agent.State storage agent = Agent.get(_agentVault);
         return Conversion.convertAmgToUBA(agent.reservedAMG + agent.mintedAMG + agent.poolRedeemingAMG);

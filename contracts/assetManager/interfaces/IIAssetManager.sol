@@ -194,6 +194,7 @@ interface IIAssetManager is IAssetManager, IGoverned, IDiamondCut, IISettingsMan
      * Returns price of asset (UBA) in NAT Wei as a fraction.
      * Used internally by collateral pool.
      */
+    //@note priceInNatWei = _multiplier / _divisor
     function assetPriceNatWei() external view returns (uint256 _multiplier, uint256 _divisor);
 
     /**

@@ -25,6 +25,7 @@ library RedemptionTimeExtension {
      * @param _agentVault the agent vault address being redeemed
      */
     //@note This tells the caller how many seconds the agent must wait before they are allowed to process this redemption.
+    //@audit-q what's would happen when an agent could set the agentData.extendedTimestamp to a very large number
     function extendTimeForRedemption(address _agentVault) internal returns (uint64) {
         State storage state = getState();
         AgentTimeExtensionData storage agentData = state.agents[_agentVault];

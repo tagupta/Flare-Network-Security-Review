@@ -19,15 +19,26 @@ contract CollateralPoolFactory is IICollateralPoolFactory, IERC165 {
         implementation = _implementation;
     }
 
+    //@audit-q there are no access modifiers here? Anybody can call this function
     function create(IIAssetManager _assetManager, address _agentVault, AgentSettings.Data memory _settings)
         external
         override
         returns (IICollateralPool)
     {
         address fAsset = address(_assetManager.fAsset());
+        //@audit-gas inefficient proxy initialization
         ERC1967Proxy proxy = new ERC1967Proxy(implementation, new bytes(0));
         CollateralPool pool = CollateralPool(payable(address(proxy)));
         pool.initialize(_agentVault, address(_assetManager), fAsset, _settings.poolExitCollateralRatioBIPS.toUint32());
+        //bytes memory initData = abi.encodeWithSelector(
+        //     CollateralPool.initialize.selector,
+        //     _agentVault,
+        //     address(_assetManager),
+        //     fAsset,
+        //     _settings.poolExitCollateralRatioBIPS.toUint32()
+        // );
+        // // Pass the initData to the proxy constructor
+        // ERC1967Proxy proxy = new ERC1967Proxy(implementation, initData);
         return pool;
     }
 

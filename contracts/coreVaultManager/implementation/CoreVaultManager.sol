@@ -254,7 +254,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
      * @inheritdoc ICoreVaultManager
      */
     //@audit-info
-    //@note he security of the system critically depends on the governance mechanism properly limiting the number of agents and redemption addresses. If governance ever fails to do this and allows the arrays to grow large, the gas DoS vulnerability would immediately become active. This places a high degree of trust on the governance process.
+    //@note The security of the system critically depends on the governance mechanism properly limiting the number of agents and redemption addresses. If governance ever fails to do this and allows the arrays to grow large, the gas DoS vulnerability would immediately become active. This places a high degree of trust on the governance process.
     function triggerInstructions() external notPaused returns (uint256 _numberOfInstructions) {
         require(triggeringAccounts.contains(msg.sender), NotAuthorized());
         _processEscrows(type(uint256).max); // process all escrows
@@ -330,7 +330,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
         nonCancelableTransferRequestsAmount = amountTmp;
 
         uint128 escrowAmountTmp = escrowAmount;
-        //@note funds are not available
+        //@note there is not amount to escrow
         //@note all the requests are not processed yet
         //@note no new escrows will be created
         if (escrowAmountTmp == 0 || length > 0 || cancelableTransferRequests.length > 0) {
@@ -342,6 +342,7 @@ contract CoreVaultManager is GovernedUUPSProxyImplementation, AddressUpdatable, 
 
         // create escrows
         //@note If we have excess capital and no pending withdrawals, use that capital to create new escrows. This enables users on the other chain (Flare) to mint new FAssets by locking collateral in these escrows.
+        //@audit-q does escrowing mean to lock collateral to back some amount of debt?
         uint256 preimageHashIndexTmp = nextUnusedPreimageHashIndex;
         uint256 minFundsToTriggerEscrow = minimalAmount + escrowAmountTmp + feeTmp;
         length = preimageHashes.length();

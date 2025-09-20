@@ -22,6 +22,7 @@ library AgentBacking {
     {
         _agent.redeemingAMG += _valueAMG;
         if (!_poolSelfCloseRedemption) {
+            //@note poolRedeemingAMG (User Redemptions) This represents a real liability for the agent. The pool owes these assets to users, and the agent must lock up collateral to cover them
             _agent.poolRedeemingAMG += _valueAMG;
         }
         releaseMintedAssets(_agent, _valueAMG);
