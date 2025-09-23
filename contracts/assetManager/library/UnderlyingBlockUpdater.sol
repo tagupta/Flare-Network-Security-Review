@@ -27,6 +27,7 @@ library UnderlyingBlockUpdater {
         // Payment proof doesn't include confirmation blocks, but at least 1 confirmation is required on every chain,
         // so we set _numberOfConfirmations to 1. The update happens only when block and timestamp increase,
         // so this cannot make the block number or timestamp approximation worse.
+        //@audit-high Reorg attack
         updateCurrentBlock(_proof.data.responseBody.blockNumber, _proof.data.responseBody.blockTimestamp, 1);
     }
 
@@ -38,6 +39,7 @@ library UnderlyingBlockUpdater {
             state.currentUnderlyingBlock = finalizationBlockNumber;
             changed = true;
         }
+        //@audit-med Integer division truncation
         uint256 finalizationBlockTimestamp =
             _blockTimestamp + _numberOfConfirmations * Globals.getSettings().averageBlockTimeMS / 1000;
         if (finalizationBlockTimestamp > state.currentUnderlyingBlockTimestamp) {

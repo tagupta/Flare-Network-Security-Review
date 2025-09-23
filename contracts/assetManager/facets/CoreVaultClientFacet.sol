@@ -181,6 +181,7 @@ contract CoreVaultClientFacet is AssetManagerBase, ReentrancyGuard, ICoreVaultCl
      * @param _payment FDC payment proof
      * @param _agentVault the agent vault address
      */
+    //@audit-q here the underlying address balance is incremented
     function confirmReturnFromCoreVault(IPayment.Proof calldata _payment, address _agentVault)
         external
         onlyEnabled

@@ -16,7 +16,7 @@ contract MaliciousRewardManager {
         uint24, /* _rewardEpochId */
         bool, /* _wrap */
         IRewardManager.RewardClaimWithProof[] calldata /* _proofs */
-    ) external returns (uint256 _rewardAmountWei) {
+    ) external view returns (uint256 _rewardAmountWei) {
         return amount;
     }
 }
