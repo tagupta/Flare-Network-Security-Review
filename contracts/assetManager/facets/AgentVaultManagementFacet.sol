@@ -170,6 +170,7 @@ contract AgentVaultManagementFacet is AssetManagerBase {
             Agent.State storage movedAgent = Agent.get(state.allAgents[ind]);
             movedAgent.allAgentsPos = uint32(ind);
         }
+        //@note the agent is present at the last index
         state.allAgents.pop();
         // mark as destroyed
         agent.status = Agent.Status.DESTROYED;

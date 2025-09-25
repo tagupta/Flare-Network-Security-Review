@@ -74,7 +74,7 @@ library AgentCollateral {
             ? _poolCollateral.amgToTokenWeiPrice.mulDiv(totalPoolTokens, _poolCollateral.fullCollateral)
             : _poolCollateral.amgToTokenWeiPrice; // price for empty pool is 1 token/NAT
         return Collateral.Data({
-            kind: Collateral.Kind.AGENT_POOL, //@note This data refers to the Agent's personal share of the pool, not the total pool itself.
+            kind: Collateral.Kind.AGENT_POOL, //@note This data refers to the Agent's personal share of the pool in terms of pool tokems
             fullCollateral: agentPoolTokens,
             amgToTokenWeiPrice: amgToPoolTokenWeiPrice
         });

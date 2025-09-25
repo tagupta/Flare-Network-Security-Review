@@ -24,7 +24,6 @@ contract AgentSettingsFacet is AssetManagerBase {
     bytes32 internal constant MINTING_POOL_COLLATERAL_RATIO_BIPS = keccak256("mintingPoolCollateralRatioBIPS");
     //@note A discount factor applied when an agent buys fAssets from the market to burn them (e.g., during liquidation or to reduce their minting).
     //@note To incentivize agents to proactively maintain their collateralization. If their ratio gets low, they can buy fAssets at a discount to burn them, which improves their ratio. This is a crucial self-healing mechanism.
-    //@audit-high need to see how this transaction can be front run by startLiquidation function by a liquidator
     bytes32 internal constant BUY_FASSET_BY_AGENT_FACTOR_BIPS = keccak256("buyFAssetByAgentFactorBIPS");
     //@note The minimum collateralization ratio the entire system must maintain after a liquidity provider withdraws their stake from the shared pool.
     //@note Purpose: This is a safety check to prevent LPs from withdrawing their funds if it would push the entire system below a safe collateralization level. It prevents a "bank run" on the pool that could collapse the protocol

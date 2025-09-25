@@ -55,6 +55,7 @@ contract ChallengesFacet is AssetManagerBase, ReentrancyGuard {
         Agent.State storage agent = Agent.get(_agentVault);
         _validateAgentStatus(agent);
         // verify transaction
+        //@note verifying that this transaction is doing what it is expected to do
         TransactionAttestation.verifyBalanceDecreasingTransaction(_payment);
         // check the payment originates from agent's address
         require(
@@ -172,15 +173,19 @@ contract ChallengesFacet is AssetManagerBase, ReentrancyGuard {
                 uint256 redemptionId = PaymentReference.decodeId(pmi.data.responseBody.standardPaymentReference);
                 Redemption.Request storage request = state.redemptionRequests[redemptionId];
                 uint256 redemptionValue = Redemptions.isOpen(request) ? request.underlyingValueUBA : 0;
+                //@note Only excess spending beyond redemption obligations is problematic
                 total += pmi.data.responseBody.spentAmount - SafeCast.toInt256(redemptionValue);
             } else {
                 // for other payment types (announced withdrawal), everything is paid from free balance
                 total += pmi.data.responseBody.spentAmount;
             }
         }
+        //@note total => unauthorizedSpending
         // check that total spent free balance is more than actual free underlying balance
+        //@note balanceAfterPayments money remains after unauthorized spending
         int256 balanceAfterPayments = agent.underlyingBalanceUBA - total;
         uint256 requiredBalance = UnderlyingBalance.requiredUnderlyingUBA(agent);
+        //@note the agent is insolvent
         require(balanceAfterPayments < requiredBalance.toInt256(), MultiplePaymentsChallengeEnoughBalance());
         // start liquidation and reward challengers
         _liquidateAndRewardChallenger(agent, msg.sender, agent.mintedAMG);

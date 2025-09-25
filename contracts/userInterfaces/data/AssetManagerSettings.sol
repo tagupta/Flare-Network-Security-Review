@@ -136,10 +136,12 @@ library AssetManagerSettings {
         // Challenge reward can be composed of two part - fixed and proportional (any of them can be zero).
         // This is the proportional part (in BIPS).
         // rate-limited
+
         uint16 paymentChallengeRewardBIPS;
         // Challenge reward can be composed of two part - fixed and proportional (any of them can be zero).
         // This is the fixed part (in vault collateral token wei).
         // rate-limited
+        //@note rewarding the challenger a fixed amount irrespective of the stake
         uint128 paymentChallengeRewardUSD5;
         // Agent has to announce any collateral withdrawal ar vault destroy and then wait for at least
         // withdrawalWaitMinSeconds. This prevents challenged agent to remove all collateral before
@@ -157,6 +159,7 @@ library AssetManagerSettings {
         // This setting is used in `unstickMinting` and `finishRedemptionWithoutPayment` to prove that the time when
         // payment/non-payment could be proved has already passed.
         // rate-limited
+        //@note "proof availability period" - it's the duration during which cryptographic proof of a transaction (or lack thereof) must be obtainable from the underlying chain.
         uint64 attestationWindowSeconds;
         // Minimum time after an update of a setting before the same setting can be updated again.
         // timelocked

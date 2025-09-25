@@ -43,7 +43,7 @@ library AgentPayout {
         Agent.State storage _agent,
         address _receiver,
         uint256 _amountWei,
-        uint256 _agentResponsibilityWei
+        uint256 _agentResponsibilityWei //@note the represents the part of the agent's fault
     ) internal returns (uint256 _amountPaid) {
         // don't want the calling method to fail due to too small balance for payout
         uint256 poolBalance = _agent.collateralPool.totalCollateral();
@@ -52,8 +52,10 @@ library AgentPayout {
         _agent.collateralPool.payout(_receiver, _amountPaid, _agentResponsibilityWei);
     }
 
+    //@note This is a bounty system that rewards users for helping complete stuck redemptions when agents are unresponsive.
     function payForConfirmationByOthers(Agent.State storage _agent, address _receiver) internal {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
+        //@note USD5 means "USD with 5 decimals"
         uint256 amount = Agents.convertUSD5ToVaultCollateralWei(_agent, settings.confirmationByOthersRewardUSD5);
         payoutFromVault(_agent, _receiver, amount);
     }

@@ -72,7 +72,6 @@ library AgentUpdates {
 
     //@note this is being called and set by the agent owner
     //@note Allowing an agent to set their own discount rate is like letting a customer set the sale price in a store.
-    //@audit-high this can cause an exploit where agents are purchasing fassets at a discounted rate and leaving the protocol with profits
     function setBuyFAssetByAgentFactorBIPS(Agent.State storage _agent, uint256 _buyFAssetByAgentFactorBIPS) internal {
         // This factor's function is to compensate agent in case of price fluctuations, so allowing it
         // above 100% doesn't make sense - it is only good for exploits.

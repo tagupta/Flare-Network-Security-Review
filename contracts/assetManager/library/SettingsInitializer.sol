@@ -66,6 +66,7 @@ library SettingsInitializer {
         require(_settings.mintingCapAMG == 0 || _settings.mintingCapAMG >= _settings.lotSizeAMG, MintingCapTooSmall());
         require(_settings.collateralReservationFeeBIPS <= SafePct.MAX_BIPS, BipsValueTooHigh());
         require(_settings.redemptionFeeBIPS <= SafePct.MAX_BIPS, BipsValueTooHigh());
+        //@note extra compensation a redeemer receives when a redemption payment fails
         require(_settings.redemptionDefaultFactorVaultCollateralBIPS > SafePct.MAX_BIPS, BipsValueTooLow());
         require(_settings.attestationWindowSeconds >= 1 days, WindowTooSmall());
         require(_settings.confirmationByOthersAfterSeconds >= 2 hours, MustBeTwoHours());

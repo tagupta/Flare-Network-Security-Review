@@ -40,6 +40,7 @@ library UnderlyingBalance {
     // The only exception is that outstanding redemption payments can push the balance below by the redeemed amount.
     function requiredUnderlyingUBA(Agent.State storage _agent) internal view returns (uint256) {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
+        //@note redeemingAMG -> fAssets currently being redeemed (in process)
         return uint256(_agent.mintedAMG + _agent.redeemingAMG) * settings.assetMintingGranularityUBA;
     }
 }

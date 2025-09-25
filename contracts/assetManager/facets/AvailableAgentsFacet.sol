@@ -40,6 +40,7 @@ contract AvailableAgentsFacet is AssetManagerBase {
         // check that there is enough free collateral for at least one lot
         Collateral.CombinedData memory collateralData = AgentCollateral.combinedData(agent);
         uint256 freeCollateralLots = collateralData.freeCollateralLots(agent);
+        //@note making sure that the agent has atlest one lot available
         require(freeCollateralLots >= 1, NotEnoughFreeCollateral());
         // add to queue
         state.availableAgents.push(_agentVault);

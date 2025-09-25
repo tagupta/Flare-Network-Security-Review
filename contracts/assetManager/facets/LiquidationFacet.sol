@@ -186,8 +186,14 @@ contract LiquidationFacet is AssetManagerBase, ReentrancyGuard {
     // (affects how many of the agent's pool tokens will be slashed).
     function _agentResponsibilityWei(Agent.State storage _agent, uint256 _amount) private view returns (uint256) {
         if (_agent.status == Agent.Status.FULL_LIQUIDATION || _agent.collateralsUnderwater == Agent.LF_VAULT) {
+            //@note this is the complete fault of the agent
+            //@note Agent was poorly managed/negligent
+            //@note Vault collateral depleted but pool collateral was still healthy
+            //@note Essentially, the agent "should have known better"
             return _amount;
         } else if (_agent.collateralsUnderwater == Agent.LF_POOL) {
+            //@note Only the pool collateral was underwater.
+            //@note This was a systemic/market failure beyond the agent's control:
             return 0;
         } else {
             // both collaterals were underwater - only half responsibility assigned to agent
