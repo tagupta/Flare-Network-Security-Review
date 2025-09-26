@@ -59,6 +59,7 @@ contract CollateralTypesFacet is AssetManagerBase {
      * that still use it as collateral will be liquidated.
      * NOTE: may not be called directly - only through asset manager controller by governance.
      */
+    //@audit-med/low indefinite extension of collateral deprecation grace periods by someone with the malicious access of asset manager controller
     function deprecateCollateralType(CollateralType.Class _collateralClass, IERC20 _token, uint256 _invalidationTimeSec)
         external
         onlyAssetManagerController
