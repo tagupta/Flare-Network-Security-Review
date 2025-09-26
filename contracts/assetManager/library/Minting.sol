@@ -38,6 +38,8 @@ library Minting {
         }
     }
 
+    //@note Successful Minting Completion
+    //@note Minting Cancellation/Failure
     function releaseCollateralReservation(CollateralReservation.Data storage _crt, CollateralReservation.Status _status)
         internal
     {

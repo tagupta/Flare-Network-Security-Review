@@ -53,6 +53,7 @@ contract CollateralReservationsFacet is AssetManagerBase, ReentrancyGuard {
      *      collateral reservation fee)
      * @param _executor the account that is allowed to execute minting (besides minter and agent)
      */
+    //@note minter is making this call
     function reserveCollateral(
         address _agentVault,
         uint256 _lots,
