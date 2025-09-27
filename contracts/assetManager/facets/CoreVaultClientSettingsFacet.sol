@@ -28,6 +28,7 @@ contract CoreVaultClientSettingsFacet is AssetManagerBase, GovernedProxyImplemen
         CoreVaultClient.getState().initialized = true;
     }
 
+    //@note the initialization of core vault client
     function initCoreVaultFacet(
         IICoreVaultManager _coreVaultManager,
         address payable _nativeAddress,

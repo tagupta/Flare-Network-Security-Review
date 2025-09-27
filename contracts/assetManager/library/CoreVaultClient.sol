@@ -87,6 +87,7 @@ library CoreVaultClient {
         returns (uint256 _maximumTransferAMG, uint256 _minimumLeftAmountAMG)
     {
         _minimumLeftAmountAMG = _minimumRemainingAfterTransferAMG(_agent);
+        //@note The function calculates how much of the agent's current redemption responsibility (mintedAMG) can be transferred to the Core Vault, while leaving enough locally for operational needs.
         _maximumTransferAMG = MathUtils.subOrZero(_agent.mintedAMG, _minimumLeftAmountAMG);
     }
 
