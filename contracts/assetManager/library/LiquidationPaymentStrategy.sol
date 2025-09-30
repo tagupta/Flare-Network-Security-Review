@@ -56,7 +56,6 @@ library LiquidationPaymentStrategy {
     // Liquidation premium step (depends on time since liquidation was started)
     // assumed: agentStatus == LIQUIDATION/FULL_LIQUIDATION
     //@audit-high this is susceptible to MEV attack
-    //@note They only need to ensure that no other liquidation transaction is included in the first block where the premium increases.
     //@note Calculate Target Block: They calculate the exact target timestamp T when the step will increase:
     //T = liquidationStartedAt + (step_number * liquidationStepSeconds)
     function _currentLiquidationStep(Agent.State storage _agent) private view returns (uint256) {

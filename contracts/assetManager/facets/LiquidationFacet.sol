@@ -61,6 +61,8 @@ contract LiquidationFacet is AssetManagerBase, ReentrancyGuard {
      * @return _amountPaidVault amount paid to liquidator (in agent's vault collateral)
      * @return _amountPaidPool amount paid to liquidator (in NAT from pool)
      */
+    //@note this is the most important function
+    //@audit-med self liquidation profit extraction, giving 0% responsibility to the agent in case pool goes underwater
     function liquidate(address _agentVault, uint256 _amountUBA)
         external
         notEmergencyPaused
@@ -129,7 +131,7 @@ contract LiquidationFacet is AssetManagerBase, ReentrancyGuard {
             _inLiquidation = true;
         } else if (status != Agent.Status.NORMAL) {
             // if agent is not in normal status, it cannot be liquidated
-            revert LiquidationNotPossible(Agents.getAgentStatus(_agent));
+            revert LiquidationNotPossible(Agents.getAgentStatus(_agent));//Empty,Destroyed,Destroying
         }
 
         // if any collateral is underwater, set/update its flag
