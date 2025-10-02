@@ -42,11 +42,13 @@ contract MintingDefaultsFacet is AssetManagerBase, ReentrancyGuard {
      * @param _proof proof that the minter didn't pay with correct payment reference on the underlying chain
      * @param _crtId id of a collateral reservation created by the minter
      */
+    //@audit-high Unfair Fee Distribution. Distributing executor fee among vault/pool.
     function mintingPaymentDefault(IReferencedPaymentNonexistence.Proof calldata _proof, uint256 _crtId)
         external
         nonReentrant
     {
         CollateralReservation.Data storage crt = Minting.getCollateralReservation(_crtId, true);
+        //@note source address root should not have been checked
         require(!_proof.data.requestBody.checkSourceAddresses, SourceAddressesNotSupported());
         Agent.State storage agent = Agent.get(crt.agentVault);
         Agents.requireAgentVaultOwner(agent);
@@ -82,7 +84,7 @@ contract MintingDefaultsFacet is AssetManagerBase, ReentrancyGuard {
     /**
      * If collateral reservation request exists for more than 24 hours, payment or non-payment proof are no longer
      * available. In this case agent can call this method, which burns reserved collateral at market price
-     * and releases the remaining collateral (CRF is also burned).
+     * and releases the remaining collateral (CRF is also burned) [Collateral reservation fee]
      * NOTE: may only be called by the owner of the agent vault in the collateral reservation request.
      * NOTE: the agent (management address) receives the vault collateral (if not NAT) and NAT is burned instead.
      *      Therefore this method is `payable` and the caller must provide enough NAT to cover the received vault
@@ -92,6 +94,10 @@ contract MintingDefaultsFacet is AssetManagerBase, ReentrancyGuard {
      *      the payment/non-payment proof anymore
      * @param _crtId collateral reservation id
      */
+    //@note handling the stuck scenarios
+    //User disappears - never sends payment, never proves anything
+    //Proof unavailability - underlying chain data becomes inaccessible
+    //System failures - oracles down, bridge issues, etc.
     function unstickMinting(IConfirmedBlockHeightExists.Proof calldata _proof, uint256 _crtId)
         external
         payable
@@ -138,6 +144,7 @@ contract MintingDefaultsFacet is AssetManagerBase, ReentrancyGuard {
         IIAgentVault vault = IIAgentVault(_agent.vaultAddress());
         // Calculate NAT amount the agent has to pay to receive the "burned" vault collateral tokens.
         // The price is FTSO price plus configurable premium (vaultCollateralBuyForFlareFactorBIPS).
+        //@note vaultCollateralBuyForFlareFactorBIPS is in %, should be more than 1
         _burnedNatWei = Conversion.convert(_amountVaultCollateralWei, vaultCollateral, poolCollateral).mulBips(
             settings.vaultCollateralBuyForFlareFactorBIPS
         );

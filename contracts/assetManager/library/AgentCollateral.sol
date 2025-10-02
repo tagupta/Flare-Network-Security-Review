@@ -166,7 +166,6 @@ library AgentCollateral {
         //@note _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) => pool's portion of the fee
         uint256 amountPoolFeeAMG =
             _chargePoolFee ? _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) : 0;
-        //@note This adds the principal amount to the pool fee. The Agent is responsible for backing not just the principal, but also the pool's share of the fee until it is collected.
         uint256 totalMintAmountAMG = _amountAMG + amountPoolFeeAMG;
         uint256 totalMintAmountWei = Conversion.convertAmgToTokenWei(totalMintAmountAMG, _data.amgToTokenWeiPrice);
         (uint256 mintingCollateralRatio,) = mintingMinCollateralRatio(_agent, _data.kind);

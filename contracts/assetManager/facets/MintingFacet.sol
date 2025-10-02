@@ -196,8 +196,8 @@ contract MintingFacet is AssetManagerBase, ReentrancyGuard {
         MintingType _mintingType,
         uint256 _crtId,
         address _minter,
-        uint64 _mintValueAMG,
-        uint256 _receivedAmountUBA,
+        uint64 _mintValueAMG, //@note valueAMG
+        uint256 _receivedAmountUBA, //@note amount received in the payment (mintingAmount + underlyingFee)
         uint256 _poolFeeUBA
     ) private {
         uint64 poolFeeAMG = Conversion.convertUBAToAmg(_poolFeeUBA);
