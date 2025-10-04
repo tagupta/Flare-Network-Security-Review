@@ -177,6 +177,7 @@ contract RedemptionConfirmationsFacet is AssetManagerBase, ReentrancyGuard {
         return block.timestamp > _request.timestamp + settings.confirmationByOthersAfterSeconds;
     }
 
+    //@note how about the scenario when agent can send more than needed in that case once the balance goes below the required balance => full liquidation begins
     function _validatePayment(Redemption.Request storage request, IPayment.Proof calldata _payment)
         private
         view

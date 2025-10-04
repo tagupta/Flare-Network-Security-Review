@@ -82,6 +82,7 @@ library RedemptionDefaults {
     ) private view returns (uint256) {
         Collateral.CombinedData memory cd = AgentCollateral.combinedData(_agent);
         // check that there are enough agent pool tokens
+        //@note Convert the failed vault payment amount to equivalent pool token value
         uint256 poolTokenEquiv =
             _paidC1Wei.mulDiv(cd.agentPoolTokens.amgToTokenWeiPrice, cd.agentCollateral.amgToTokenWeiPrice);
         uint256 requiredPoolTokensForRemainder = uint256(
@@ -115,9 +116,12 @@ library RedemptionDefaults {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // calculate collateral data for vault collateral
         Collateral.Data memory cdAgent = AgentCollateral.agentVaultCollateralData(_agent);
+        //@note For a given redemption amount, calculate how much collateral the redeemer is entitled to receive, based on their proportional claim on the agent's total collateral.
+        //@note What you deserve based on reality
         uint256 maxVaultCollateralWei = cdAgent.maxRedemptionCollateral(_agent, _request.valueAMG);
         // for pool self close redemption, everything is paid from agent's vault collateral
         if (_request.poolSelfClose) {
+            //@note What you wish you could get in an ideal world
             _vaultCollateralWei = Conversion.convertAmgToTokenWei(_request.valueAMG, cdAgent.amgToTokenWeiPrice);
             _poolWei = 0;
             // if there is not enough vault collateral, just reduce the payment
