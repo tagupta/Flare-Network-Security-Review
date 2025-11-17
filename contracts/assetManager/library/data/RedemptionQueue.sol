@@ -100,6 +100,9 @@ library RedemptionQueue {
         delete _state.tickets[_ticketId];
     }
 
+    //@audit-q not checking the validity of _id => ticket ID
+    //@note  Ticket storage ticket = _state.tickets[_id];
+    //require(ticket.agentVault != address(0), "Ticket does not exist");
     function getTicket(State storage _state, uint64 _id) internal view returns (Ticket storage) {
         return _state.tickets[_id];
     }

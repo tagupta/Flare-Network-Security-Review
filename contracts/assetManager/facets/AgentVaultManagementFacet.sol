@@ -164,6 +164,14 @@ contract AgentVaultManagementFacet is AssetManagerBase {
         // destroy agent vault
         IIAgentVault(_agentVault).destroy();
         // remove from the list of all agents
+        //@audit-low Array index corruption in agent position tracking
+        //@note Off-by-one bug: allAgentsPos stores index + 1 but code uses it as direct array index, causing array out-of-bounds access and state corruption.
+        //         uint256 ind = agent.allAgentsPos - 1;
+        // if (ind + 1 < state.allAgents.length) {
+        //     state.allAgents[ind] = state.allAgents[state.allAgents.length - 1];
+        //     Agent.State storage movedAgent = Agent.get(state.allAgents[ind]);
+        //     movedAgent.allAgentsPos = uint32(ind + 1);
+        // }
         uint256 ind = agent.allAgentsPos;
         if (ind + 1 < state.allAgents.length) {
             state.allAgents[ind] = state.allAgents[state.allAgents.length - 1];

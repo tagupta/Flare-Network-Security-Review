@@ -66,6 +66,7 @@ abstract contract GovernedBase is IGoverned {
         delete state.timelockedCalls[encodedCallHash];
         state.executing = true;
         //solhint-disable-next-line avoid-low-level-calls
+        //@audit-low Unvalidated external call in governance execution
         (bool success,) = address(this).call(_encodedCall);
         state.executing = false;
         emit TimelockedGovernanceCallExecuted(encodedCallHash);

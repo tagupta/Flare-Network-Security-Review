@@ -60,6 +60,7 @@ contract MintingFacet is AssetManagerBase, ReentrancyGuard {
      *      payment reference)
      * @param _crtId collateral reservation id
      */
+    //@audit-low executeMinting function is executable during paused minting
     function executeMinting(IPayment.Proof calldata _payment, uint256 _crtId) external nonReentrant {
         CollateralReservation.Data storage crt = Minting.getCollateralReservation(_crtId, true);
         Agent.State storage agent = Agent.get(crt.agentVault);

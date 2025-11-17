@@ -92,6 +92,7 @@ contract CollateralReservationsFacet is AssetManagerBase, ReentrancyGuard {
         cr.minter = msg.sender;
         if (_executor != address(0)) {
             cr.executor = _executor;
+            //@audit-low Executor-fee remainder (<1 gwei) is neither recorded nor refunded when an executor is set, leaving dust in the contract
             cr.executorFeeNatGWei = ((msg.value - reservationFee) / Conversion.GWEI).toUint64();
         }
         (uint64 lastUnderlyingBlock, uint64 lastUnderlyingTimestamp) = _lastPaymentBlock();

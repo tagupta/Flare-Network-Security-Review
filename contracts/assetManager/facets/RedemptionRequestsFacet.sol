@@ -54,6 +54,8 @@ contract RedemptionRequestsFacet is AssetManagerBase, ReentrancyGuard {
      * @return _redeemedAmountUBA the actual redeemed amount; may be less than requested if there are not enough
      *      redemption tickets available or the maximum redemption ticket limit is reached
      */
+    //@audit-q in the case of incomplete redemption, does the fee will be charged from the user mutiple times? - Y
+    //@audit-low Zero-lot redemption is a silent no-op
     function redeem(uint256 _lots, string memory _redeemerUnderlyingAddressString, address payable _executor)
         external
         payable
@@ -79,6 +81,7 @@ contract RedemptionRequestsFacet is AssetManagerBase, ReentrancyGuard {
         uint256 executorFeeNatGWei = msg.value / Conversion.GWEI;
         for (uint256 i = 0; i < redemptionList.length; i++) {
             // distribute executor fee over redemption request with at most 1 gwei leftover
+            //@audit-low division truncation
             uint256 currentExecutorFeeNatGWei = executorFeeNatGWei / (redemptionList.length - i);
             executorFeeNatGWei -= currentExecutorFeeNatGWei;
             RedemptionRequests.createRedemptionRequest(
@@ -235,6 +238,7 @@ contract RedemptionRequestsFacet is AssetManagerBase, ReentrancyGuard {
      * @return _closedAmountUBA the actual self-closed amount, may be less than requested if there are not enough
      *      redemption tickets available or the maximum redemption ticket limit is reached
      */
+    //@note need to check the withdrawal function for collateral withdrawal
     function selfClose(address _agentVault, uint256 _amountUBA)
         external
         notEmergencyPaused

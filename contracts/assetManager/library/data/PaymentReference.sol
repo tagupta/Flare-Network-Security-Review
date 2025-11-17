@@ -68,6 +68,7 @@ library PaymentReference {
         return uint256(_reference) & LOW_BITS_MASK;
     }
 
+    //@audit-low weak randomization
     function randomizedIdSkip() internal view returns (uint64) {
         // This is rather weak randomization, but it's ok for the purpose of preventing speculative underlying
         // payments, since there is only one guess possible - the first mistake makes agent liquidated.

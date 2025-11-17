@@ -52,7 +52,6 @@ contract AgentVault is ReentrancyGuard, UUPSUpgradeable, IIAgentVault, IERC165 {
         initializeReentrancyGuard();
     }
 
-    //@audit-q ignores the returned values
     function buyCollateralPoolTokens() external payable onlyOwner {
         collateralPool().enter{value: msg.value}();
     }

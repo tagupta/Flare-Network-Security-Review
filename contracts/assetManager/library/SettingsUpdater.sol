@@ -13,7 +13,10 @@ library SettingsUpdater {
 
     bytes32 internal constant UPDATES_STATE_POSITION = keccak256("fasset.AssetManager.UpdaterState");
 
+    //@audit-low same message.signature - selector of two different funtions can cause collision:
+    //@note Time lock mechanism uses msg.sig which allows functions with identical selectors to bypass time lock by sharing the same lock state.
     function checkEnoughTimeSinceLastUpdate() internal {
+        //@note bytes32 actionId = keccak256(abi.encode(address(this), msg.sig));
         checkEnoughTimeSinceLastUpdate(msg.sig);
     }
 

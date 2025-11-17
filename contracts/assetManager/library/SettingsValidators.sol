@@ -31,7 +31,9 @@ library SettingsValidators {
         require(liquidationFactors.length >= 1, AtLeastOneFactorRequired());
         for (uint256 i = 0; i < liquidationFactors.length; i++) {
             // per item validations
+            //@note "Total premium must be > 100%" - liquidators must profit
             require(liquidationFactors[i] > SafePct.MAX_BIPS, FactorNotAboveOne());
+            //@note "Vault share cannot exceed total premium" - mathematically sound
             require(vaultCollateralFactors[i] <= liquidationFactors[i], VaultCollateralFactorHigherThanTotal());
             require(i == 0 || liquidationFactors[i] > liquidationFactors[i - 1], FactorsNotIncreasing());
         }

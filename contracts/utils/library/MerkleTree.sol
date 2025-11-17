@@ -110,6 +110,8 @@ library MerkleTree {
                     continue;
                 }
                 // This should never happen
+                //@audit-low Unreachable assert in merkle tree logic
+                //@note assert(false) indicates unreachable code path but suggests logic errors in Merkle tree algorithm. If triggered, causes transaction reversion.
                 assert(false);
             }
         }

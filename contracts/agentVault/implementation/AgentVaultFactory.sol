@@ -9,10 +9,9 @@ import {IIAssetManager} from "../../assetManager/interfaces/IIAssetManager.sol";
 import {IIAgentVault} from "../../agentVault/interfaces/IIAgentVault.sol";
 
 contract AgentVaultFactory is IIAgentVaultFactory, IERC165 {
-    //@audit-q this should rather be an immutable variable
     address public implementation;
 
-    //@audit-low No Implementation Address Validation
+    //@report-written No Implementation Address Validation
     constructor(address _implementation) {
         implementation = _implementation;
     }
@@ -20,17 +19,9 @@ contract AgentVaultFactory is IIAgentVaultFactory, IERC165 {
     /**
      * @notice Creates new agent vault
      */
-    //@audit-q is it okay, if anyone can call create
-    // No access control - anyone can create agent vaults.
     function create(IIAssetManager _assetManager) external returns (IIAgentVault) {
         ERC1967Proxy proxy = new ERC1967Proxy(implementation, new bytes(0));
         AgentVault agentVault = AgentVault(payable(address(proxy)));
-        //@audit-gas inefficient initialization
-        //      bytes memory initData = abi.encodeWithSignature(
-        //     "initialize(address)",
-        //     address(_assetManager)
-        // );
-        // ERC1967Proxy proxy = new ERC1967Proxy(implementation, initData);
         agentVault.initialize(_assetManager);
 
         return agentVault;

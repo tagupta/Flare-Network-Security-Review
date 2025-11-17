@@ -164,6 +164,7 @@ library AgentCollateral {
     ) internal view returns (uint256) {
         //@note _amountAMG.mulBips(_agent.feeBIPS) => total fee in AMG
         //@note _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) => pool's portion of the fee
+        //@audit-low cascading truncation
         uint256 amountPoolFeeAMG =
             _chargePoolFee ? _amountAMG.mulBips(_agent.feeBIPS).mulBips(_agent.poolFeeShareBIPS) : 0;
         uint256 totalMintAmountAMG = _amountAMG + amountPoolFeeAMG;

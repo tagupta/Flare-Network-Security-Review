@@ -12,7 +12,6 @@ contract AgentOwnerRegistry is GovernedUUPSProxyImplementation, IERC165, IAgentO
     event ManagerChanged(address manager);
 
     error AddressZero();
-    //@audit-low the name of this error and the one of the modiifers is the same
     error OnlyGovernanceOrManager();
 
     /**
@@ -26,7 +25,7 @@ contract AgentOwnerRegistry is GovernedUUPSProxyImplementation, IERC165, IAgentO
     mapping(address => address) private workToMgmtAddress;
     mapping(address => address) private mgmtToWorkAddress;
 
-    //@audit-info create a struct and mapping to store information optimally
+    //@report-written create a struct and mapping to store information optimally
     mapping(address => string) private agentName;
     mapping(address => string) private agentDescription;
     mapping(address => string) private agentIconUrl;
@@ -37,9 +36,6 @@ contract AgentOwnerRegistry is GovernedUUPSProxyImplementation, IERC165, IAgentO
         _;
     }
 
-    //@audit-q what's the thing that's making this function not to be called again
-    // the checks of the initialise won't let reinitialisation happen
-    //@audit-low protect the initialize function with the initializer modifier
     function initialize(IGovernanceSettings _governanceSettings, address _initialGovernance) external {
         initialise(_governanceSettings, _initialGovernance); // also marks as initialized
     }
@@ -48,7 +44,7 @@ contract AgentOwnerRegistry is GovernedUUPSProxyImplementation, IERC165, IAgentO
         _removeAddressFromWhitelist(_address);
     }
 
-    //@audit-low no zero address check
+    //@report-written
     function setManager(address _manager) external onlyGovernance {
         manager = _manager;
         emit ManagerChanged(_manager);
@@ -72,7 +68,6 @@ contract AgentOwnerRegistry is GovernedUUPSProxyImplementation, IERC165, IAgentO
         string memory _touUrl
     ) external onlyGovernanceOrManager {
         _addAddressToWhitelist(_managementAddress);
-        //@audit-q check whether it is updating the details of a whitelisted address?
         _setAgentData(_managementAddress, _name, _description, _iconUrl, _touUrl);
     }
 

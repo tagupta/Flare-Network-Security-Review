@@ -199,6 +199,7 @@ contract LiquidationFacet is AssetManagerBase, ReentrancyGuard {
             return 0;
         } else {
             // both collaterals were underwater - only half responsibility assigned to agent
+            //@audit-low induce precision loss
             return _amount / 2;
         }
     }

@@ -251,6 +251,7 @@ contract CollateralPool is IICollateralPool, ReentrancyGuard, UUPSUpgradeable, I
         uint256 requiredFAssets = _getFAssetRequiredToNotSpoilCR(natShare);
         // Rare case: if agent has too many low-valued open tickets they can't redeem the requiredFAssets
         // in one transaction. In that case, we revert and the user should retry with lower amount.
+        //@audit-low Denial of service for legitimate self-close exits when maxAgentRedemption == requiredFAssets
         require(maxAgentRedemption > requiredFAssets, RedemptionRequiresClosingTooManyTickets());
         // get owner f-asset fees to be spent (maximize fee withdrawal to cover the potentially necessary f-assets)
         uint256 debtFAssetFeeShare = _tokensToVirtualFeeShare(_tokenShare);

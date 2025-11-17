@@ -269,6 +269,8 @@ contract FtsoV2PriceStore is
         _price = feed.value;
         _timestamp = _getEndTimestamp(feed.votingRoundId);
         int256 decimals = feed.decimals; // int8
+        //@audit-low Price manipulation via negative decimal exponentiation
+        //@note Large negative decimals (e.g., -50) cause massive price multipliers via 10 ** uint256(-decimals), inflating prices by orders of magnitude.
         if (decimals < 0) {
             _priceDecimals = 0;
             _price *= 10 ** uint256(-decimals);

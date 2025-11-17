@@ -142,6 +142,7 @@ contract ChallengesFacet is AssetManagerBase, ReentrancyGuard {
      * @param _payments proofs of several distinct payments from the agent's underlying address
      * @param _agentVault agent vault address
      */
+    //@audit-low O(n²) complexity DoS in payment challenge validation due to duplication check
     function freeBalanceNegativeChallenge(IBalanceDecreasingTransaction.Proof[] calldata _payments, address _agentVault)
         external
         nonReentrant

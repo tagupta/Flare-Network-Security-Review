@@ -32,7 +32,7 @@ abstract contract AddressUpdatable is IAddressUpdatable, IIAddressUpdatable {
     /**
      * @notice external method called from AddressUpdater only
      */
-    //@audit-med not making sure that the length of _contractNameHashes is same as _contractAddresses
+    //@audit-low not making sure that the length of _contractNameHashes is same as _contractAddresses
     function updateContractAddresses(bytes32[] memory _contractNameHashes, address[] memory _contractAddresses)
         external
         override

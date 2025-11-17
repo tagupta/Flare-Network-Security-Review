@@ -35,6 +35,7 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
     error BipsValueTooLow();
     error MustBeAtLeastTwoHours();
     error WindowTooSmall();
+    //@audit-info unused error
     error ConfirmationTimeTooBig();
 
     struct UpdaterState {
@@ -123,6 +124,7 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
     function setCleanerContract(address _value) external onlyAssetManagerController rateLimited {
         IIFAsset fAsset = Globals.getFAsset();
         // validate
+        //@audit-low not checking the address value against address 0
         // update
         fAsset.setCleanerContract(_value);
         emit ContractChanged("cleanerContract", _value);
@@ -131,6 +133,7 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
     function setCleanupBlockNumberManager(address _value) external onlyAssetManagerController rateLimited {
         IIFAsset fAsset = Globals.getFAsset();
         // validate
+        //@audit-low not checking the address value against address 0
         // update
         fAsset.setCleanupBlockNumberManager(_value);
         emit ContractChanged("cleanupBlockNumberManager", _value);
@@ -179,6 +182,8 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
         // validate
         require(_rewardNATWei <= (settings.paymentChallengeRewardUSD5 * 4) + 100 ether, IncreaseTooBig());
         require(_rewardNATWei >= (settings.paymentChallengeRewardUSD5) / 4, DecreaseTooBig());
+        //@note is this okay? Does it not need to handle 100 in bips?
+        //@audit-q does it not need to check that this value must remain less than MAX_BIPS
         require(_rewardBIPS <= (settings.paymentChallengeRewardBIPS * 4) + 100, IncreaseTooBig());
         require(_rewardBIPS >= (settings.paymentChallengeRewardBIPS) / 4, DecreaseTooBig());
         // update
@@ -254,10 +259,12 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // validate
         require(_value > SafePct.MAX_BIPS, BipsValueTooLow());
+        //@audit-low use of magic number
         require(
             _value <= uint256(settings.redemptionDefaultFactorVaultCollateralBIPS).mulBips(12000) + 1000,
             FeeIncreaseTooBig()
         );
+        //@audit-low use of magic number
         require(
             _value >= uint256(settings.redemptionDefaultFactorVaultCollateralBIPS).mulBips(8333), FeeDecreaseTooBig()
         );
@@ -328,6 +335,8 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
         emit SettingChanged("averageBlockTimeMS", _value);
     }
 
+    //@note not setting up a limit on the lower value of this, enabling value to be set to 0
+    //@audit-q test how having this value as 0 can create the imapact
     function setMintingPoolHoldingsRequiredBIPS(uint256 _value) external onlyAssetManagerController rateLimited {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // validate
@@ -337,15 +346,18 @@ contract SettingsManagementFacet is AssetManagerBase, IAssetManagerEvents, IISet
         emit SettingChanged("mintingPoolHoldingsRequiredBIPS", _value);
     }
 
+    //@audit-q why is it allowing value to be set 0
     function setMintingCapAmg(uint256 _value) external onlyAssetManagerController rateLimited {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // validate
+        //@note is this the right condition regarding 0?
         require(_value == 0 || _value >= settings.lotSizeAMG, ValueTooSmall());
         // update
         settings.mintingCapAMG = _value.toUint64();
         emit SettingChanged("mintingCapAMG", _value);
     }
 
+    //@note no validation against this value
     function setTokenInvalidationTimeMinSeconds(uint256 _value) external onlyAssetManagerController rateLimited {
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         // validate

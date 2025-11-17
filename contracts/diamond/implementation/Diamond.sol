@@ -46,5 +46,6 @@ abstract contract Diamond {
         }
     }
 
+    //@audit-low Diamond contract accepts Ether through receive() function but provides no mechanism to withdraw trapped funds. Native tokens sent directly to diamond become permanently inaccessible.
     receive() external payable {}
 }

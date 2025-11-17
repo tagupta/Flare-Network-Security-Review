@@ -39,7 +39,9 @@ contract RedemptionTimeExtensionFacet is AssetManagerBase, IRedemptionTimeExtens
         // validate
         AssetManagerSettings.Data storage settings = Globals.getSettings();
         uint256 currentValue = RedemptionTimeExtension.redemptionPaymentExtensionSeconds();
+        //@note New value cannot exceed 4x the current value (plus one block time)
         require(_value <= currentValue * 4 + settings.averageBlockTimeMS / 1000, IncreaseTooBig());
+        //@note New value cannot be less than 1/4 of the current value
         require(_value >= currentValue / 4, DecreaseTooBig());
         require(_value > 0, ValueMustBeNonzero());
         // update

@@ -14,6 +14,7 @@ contract EmergencyPauseFacet is AssetManagerBase, IAssetManagerEvents {
 
     error PausedByGovernance();
 
+    //@audit-low No upper bound is enforced on _duration
     function emergencyPause(bool _byGovernance, uint256 _duration) external onlyAssetManagerController {
         AssetManagerState.State storage state = AssetManagerState.get();
         bool pausedAtStart = _paused();

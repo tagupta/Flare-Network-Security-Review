@@ -38,7 +38,7 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
     error OnlyAgentVaultOrPool();
     error CollateralNotDeprecated();
     error CollateralWithdrawalAnnounced();
-    //@audit-low unused error
+    //@report-written unused error
     error FAssetNotTerminated();
 
     /**
@@ -58,7 +58,6 @@ contract AgentCollateralFacet is AssetManagerBase, ReentrancyGuard {
         return _announceWithdrawal(Collateral.Kind.VAULT, _agentVault, _valueNATWei);
     }
 
-    //@audit-low incorrect documentation
     /**
      * Agent is going to withdraw `_valueNATWei` amount of collateral from agent vault.
      * This has to be announced and agent must then wait `withdrawalWaitMinSeconds` time.
